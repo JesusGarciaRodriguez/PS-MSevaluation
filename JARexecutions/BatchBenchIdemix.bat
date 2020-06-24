@@ -1,0 +1,1 @@
+java -Xbootclasspath/p:.\lib\idmx-0.3.3.jar -jar .\BenchmarkIdemix-jar-with-dependencies.jar 1 10

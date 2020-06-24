@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<abc:SystemParameters xmlns:abc="http://abc4trust.eu/wp2/abcschemav1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:idmx="http://zurich.ibm.com" xmlns:xs="http://www.w3.org/2001/XMLSchema" Version="3.0.0" SystemParametersUID="idmx:global://zurich.ibm.com/parameters?type=system,name=*,version=1">
+    <abc:CryptoParams>
+        <abc:UriParameter Name="urn:idmx:3.0.0:systemParameters:spId">
+            <abc:Value>idmx:global://zurich.ibm.com/parameters?type=system,name=*,version=1</abc:Value>
+        </abc:UriParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:attributeLength">
+            <abc:Value>256</abc:Value>
+        </abc:IntegerParameter>
+        <abc:BigIntegerParameter Name="urn:idmx:3.0.0:systemParameters:dhGen-1">
+            <abc:Value>8771362977922846693309275719955298792429341656334351925910256921442469016494923566856927196909657232859813734832740198993154702478008013990781441608293024332251075581498105325290074227354144714893694083264148546392853384405471055504783933920048718828433907588312557253869107336011403539823816548425483719625511051579717774450406072218138981999331535071434898241874085643600916404520450343314336318003400919594745575009462414925401904451916620498644419131261561975664830820464817896910481048610452976828657236204073597378601720705113494402308105985692225595533809215267436322145688968870771517082633463491815646538357</abc:Value>
+        </abc:BigIntegerParameter>
+        <abc:BigIntegerParameter Name="urn:idmx:3.0.0:systemParameters:dhGen-2">
+            <abc:Value>6196424802049254700462482055579671871276851203146230086659699029359037425890432189643424592791745975942029110912399190713961648784965975036671084855266155949040891942509212019696647721214065214447554079710322831201406099800939947638821617267169566415970566013342549651392796232604713278470770650818910011102391115783199265993522953248345435601527710368801325152634039852628111719568416392776945884068355632200003699130492627212566875735975037934115136457831654738703352703644703487566458076773035040809794081229702172740793471923682780998195163470331597875924662960387212448972800862410720796356043256849609317570860</abc:Value>
+        </abc:BigIntegerParameter>
+        <abc:BigIntegerParameter Name="urn:idmx:3.0.0:systemParameters:dhModulus">
+            <abc:Value>25514048052301964007862249148777900026732936809797113846201419668999893381240437552978842095891851945079115466598849706035948456845110588292976628949816405532018162878246751371606782584619771261029916956493270722073960754475102819914940123697525177035645047173372160270027652939493128319474144768970819277811703628259212353213137281172022850373136504135991816967957860088288721554275726019623643021078551245536906586516560250157881142192729182273656270933884424796215821526822506668723930823465003830589050883749056202848518403497021778760390241150672079301209716272621749243227963673149381719893774406576723489018467</abc:Value>
+        </abc:BigIntegerParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:dhModulusLength">
+            <abc:Value>2048</abc:Value>
+        </abc:IntegerParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:dhSubgroupLength">
+            <abc:Value>264</abc:Value>
+        </abc:IntegerParameter>
+        <abc:BigIntegerParameter Name="urn:idmx:3.0.0:systemParameters:dhSubgroupOrder">
+            <abc:Value>14908855934643096547283895447147480675404364804686375666740517191808174408093161</abc:Value>
+        </abc:BigIntegerParameter>
+        <abc:StringParameter Name="urn:idmx:3.0.0:systemParameters:hashFunction">
+            <abc:Value>urn:abc4trust:1.0:hashalgorithm:sha-256</abc:Value>
+        </abc:StringParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:primeProb">
+            <abc:Value>80</abc:Value>
+        </abc:IntegerParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:rsaModulusLength">
+            <abc:Value>2048</abc:Value>
+        </abc:IntegerParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:securityLevel">
+            <abc:Value>103</abc:Value>
+        </abc:IntegerParameter>
+        <abc:IntegerParameter Name="urn:idmx:3.0.0:systemParameters:statisticalZk">
+            <abc:Value>80</abc:Value>
+        </abc:IntegerParameter>
+    </abc:CryptoParams>
+</abc:SystemParameters>

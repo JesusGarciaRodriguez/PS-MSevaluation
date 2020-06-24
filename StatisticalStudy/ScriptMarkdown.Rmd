@@ -1,0 +1,2204 @@
+---
+title: "TFM"
+author: "Jesús García Rodríguez
+  jesus.garcia15@um.es"
+date: "2020"
+output: 
+  html_document:
+    fig_caption: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r funAuxiliaresyLibrerias,echo=FALSE,include=FALSE}
+library(ggplot2)
+library(hrbrthemes)
+library(reshape2)
+library(fitdistrplus)
+library(plotly)
+library("permute")
+#setwd("C:/Users/kepxu/Desktop/Universidad/Workspace/TFM/StatisticalStudy")
+setwd("D:/Jesus/Desktop/Universidad/Workspace/TFM/StatisticalStudy")
+dataDirectory <- "data"
+
+readRowFile <- function(filename){
+  aux <- read.table(filename, row.names = 1)
+  aux2<-as.data.frame(t(aux))
+  rownames(aux2) <- 1:nrow(aux2)
+  return(aux2)
+}
+
+meanTimes<- function(df){
+  newDf<-as.data.frame(lapply(df,mean))
+  colnames(newDf)<-colnames(df)
+  return(newDf)
+}
+
+sdTimes <- function(df){
+  return(  as.data.frame(lapply(df,sd)))
+}
+
+parseToNumber <- function(fileName){
+  return(sub('\\.txt$', '',strsplit(fileName, "-")[[1]][2]))
+}
+
+summInDF<- function(dfList){
+  newDF<- data.frame(matrix(nrow =length(dfList) ,  ncol=length(dfList[[1]])))
+  newDF[colnames(newDF)]<-lapply(newDF[colnames(newDF)], as.numeric)
+  listNames<-names(dfList)
+  columnNames<-colnames(dfList[[1]])
+  rownames(newDF) <- lapply(listNames, parseToNumber)
+  colnames(newDF) <- columnNames
+  for(lName in  listNames){
+    columnNames<-colnames(dfList[[lName]])
+    for(cName in columnNames){
+      newDF[parseToNumber(lName),cName] <- dfList[[lName]][[cName]]
+    }
+  }
+  return(newDF)
+}
+
+plotData <- function(yValues,xValues,title,labX,labY,scaleY){
+  x <- as.numeric(xValues)
+  y <- as.numeric(yValues)
+  data <- data.frame(x,y)
+  ggplot(data, aes(x=x, y=y)) +
+    geom_line( color="#69b3a2", size=1, alpha=0.9, linetype=1)+
+    geom_point(size=2) +
+    theme_ipsum_rc() +
+    ggtitle(title)+ 
+    labs(x=labX)+
+    labs(y=labY)+
+    coord_cartesian(ylim=c(0,max(data$y,na.rm = TRUE)+scaleY))+
+    scale_x_continuous(breaks = round(seq(min(data$x,na.rm = TRUE), max(data$x,na.rm = TRUE), by = 1),1), minor_breaks = round(seq(min(data$x,na.rm = TRUE), max(data$x,na.rm = TRUE), by = 1),1)) +
+    scale_y_continuous(breaks = round(seq(0, max(data$y,na.rm = TRUE)+scaleY, by = scaleY),1), minor_breaks = round(seq(0, max(data$y,na.rm = TRUE), by = scaleY),1))
+}
+
+wrapperListPlot<- function(df,dfName,benchName,fixParam,xLabel,scaleY){
+  number<-parseToNumber(dfName)
+  plotData(df[1,],lapply(colnames(df),parseToNumber),paste(benchName,fixParam,number,"",sep=" "),xLabel,"Time (ms)",scaleY)
+}
+
+wrapperDfColumnPlot<- function(colName,df,benchName,fixParam,xLabel,scaleY){
+  number<-parseToNumber(colName)
+  plotData(df[[colName]],rownames(df),paste(benchName,fixParam,number,"",sep=" "),xLabel,"Time (ms)",scaleY)
+}
+
+multilinePlotColumns <- function(df,title,labX,labY,labLegend){
+  df$NS<-as.numeric(rownames(df))
+  meltedDF<-melt(data=df,id.vars="NS")
+  ggplot(meltedDF,aes(x=NS,y=value)) +
+    geom_line(aes(group = variable, color=variable))+
+    geom_point(aes(group = variable, color=variable),size=1)+
+    theme_ipsum_rc() +
+    ggtitle(title)+ 
+    labs(x=labX)+
+    labs(y=labY)+
+    labs(color=labLegend)+
+    scale_x_continuous(breaks = round(seq(1, 10, by = 1),1), minor_breaks = round(seq(1, 10, by = 1),1)) 
+}
+
+multilinePlotRows <- function(df,title,labX,labY,labLegend,paramName){
+  tDf<-as.data.frame(t(df))
+  rownames(tDf)<-lapply(rownames(tDf), parseToNumber)
+  colnames(tDf)<- lapply(colnames(tDf), function(x) paste(paramName,x,sep="-"))
+  multilinePlotColumns(df=tDf,title,labX,labY,labLegend)
+}
+
+lineartrendPlotNS <- function(df,title,labX,labY){
+  df$NS<-as.numeric(rownames(df))
+  meltedDF<-melt(data=df,id.vars="NS")
+  ggplot(meltedDF,aes(x=NS,y=value)) +
+    geom_point(color="turquoise4") +
+    geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+    theme_ipsum_rc() +
+    ggtitle(title)+ 
+    labs(x=labX)+
+    labs(y=labY)+
+    scale_x_continuous(breaks = round(seq(1, 10, by = 1),1), minor_breaks = round(seq(1, 10, by = 1),1)) 
+}
+
+lineartrendPlotAttr <- function(df,title,labX,labY){
+  tDf<-as.data.frame(t(df))
+  rownames(tDf)<-lapply(rownames(tDf), parseToNumber)
+  colnames(tDf)<- lapply(colnames(tDf), function(x) paste("NS",x,sep="-"))
+  lineartrendPlotNS(tDf,title,labX,labY)
+}
+
+```
+
+
+
+# PS signatures with BLS461 curve
+##  Analysis of key generation times
+For now, only a single file will be used, which includes key generation times for different numbers of attributes.
+
+[//]: # Data treatment
+
+```{r keyGenData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchKeyGenBLS461.txt", sep="/"))
+keyGenData<-lapply(fileList,readRowFile)
+names(keyGenData)<-fileList
+meanKeyGenData<-lapply(keyGenData,meanTimes)
+sdkeyGenData<-lapply(keyGenData,sdTimes)[[1]]
+meanKeyGenData<-meanKeyGenData[[1]]
+```
+
+```{r keyGenPlot, echo=FALSE, fig.cap="Times for key generation",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-plotData(xValues=lapply(colnames(meanKeyGenData),parseToNumber),yValues=meanKeyGenData[1,],title = "Key Geneneration times",labX="Number of attribtues",labY="Time (ms)",scaleY=5)
+show(g)
+```
+
+```{r keyGenPlotTrend, echo=FALSE, fig.cap="Times for key generation with linear trend for 50 repetitions of each experiment",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotAttr(keyGenData[[1]],paste("Key generation"),"Number of attributes","Time (ms)")
+# ggsave("KeyGenVaryAttr.pdf", device = cairo_pdf)
+show(g) 
+```
+
+## Analysis of key aggregation times
+```{r keyAggrData,echo=FALSE,include=FALSE}
+##  keyAggr
+fileList<-Sys.glob(paste(dataDirectory,"BenchKeyAggrBLS461_NS-*.txt", sep="/"))
+keyAggrData<-lapply(fileList,readRowFile)
+names(keyAggrData)<-fileList
+meankeyAggrData<-lapply(keyAggrData,meanTimes)
+sdkeyAggrData<-summInDF(lapply(keyAggrData,sdTimes))
+summarykeyAggrData<-summInDF(meankeyAggrData)
+
+```
+
+```{r keyAggrSinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE}
+graphskeyAggrNAttr<-mapply(wrapperListPlot,df=meankeyAggrData,dfName=names(meankeyAggrData),benchName="keyAggrTimes",fixParam="NS",xLabel="Number of Attributes",scaleY=1,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphskeyAggrNAttr),1)){
+  show(graphskeyAggrNAttr[[i]])
+}
+graphskeyAggrNS<-lapply(colnames(summarykeyAggrData),wrapperDfColumnPlot,df=summarykeyAggrData,benchName="keyAggrTimes",fixParam="NAttr",xLabel="Number of Signers",scaleY=1)
+for(i in seq(1,length(graphskeyAggrNS),1)){
+  show(graphskeyAggrNS[[i]])
+}
+```
+
+```{r keyAggrMultiPlotNS, echo=FALSE, fig.cap="keyAggr times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summarykeyAggrData,"Key Aggregation","Number of signers","Time (ms)","Attributes")
+#ggsave("KeyAggrVaryNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r keyAggrMultiPlotNattr, echo=FALSE, fig.cap="keyAggr times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summarykeyAggrData,"Key Aggregation","Number of attributes","Time (ms)","Signers","NS")
+#ggsave("KeyAggrVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r keyAggrMultiPlotLinear, echo=FALSE, fig.cap="keyAggr times against number of attributes with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotAttr(summarykeyAggrData,"keyAggr with linear trend","Number of attributes","Time (ms)")
+show(g)
+```
+
+```{r keyAggr3D, echo=FALSE, fig.cap="Key aggregation times",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+xAxe<-as.numeric(lapply(colnames(summarykeyAggrData),parseToNumber))
+yAxe<-as.numeric(rownames(summarykeyAggrData))
+g<-plot_ly(x=xAxe,y=yAxe,z = as.matrix(summarykeyAggrData))%>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#  ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  )%>% 
+  layout(title="Key Aggregation",
+         scene = list(
+           xaxis = list(title = "Number of attributes",dtick=1),
+           yaxis = list(title = "Number of signers",dtick=1),
+           zaxis = list(title = "Time(ms)")
+         ))
+show(g)
+```
+
+##  Analysis of signing times
+Multiple files containing the times for different number of signers will be used, each file with times for different numbers of attributes. However, times are taken for a single signer (as signing would be done in parallel by different signers), so data for different number of signers should change only because of typical variations in experiments, maybe could be summarized into a single one using means or regression?).
+
+[//]: # Data treatment
+
+```{r signingData,echo=FALSE,include=FALSE}
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchSignBLS461_NS-*.txt", sep="/"))
+signingData<-lapply(fileList,readRowFile)
+names(signingData)<-fileList
+meanSigningData<-lapply(signingData,meanTimes)
+sdSigningData<-summInDF(lapply(signingData,sdTimes))
+summarySigningData<-summInDF(meanSigningData)
+```
+
+```{r signingSinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE,eval=FALSE}
+graphsSigningNAttr<-mapply(wrapperListPlot,df=meanSigningData,dfName=names(meanSigningData),benchName="SigningTimes",fixParam="NS",xLabel="Number of Attributes",scaleY=1,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsSigningNAttr),1)){
+  show(graphsSigningNAttr[[i]])
+}
+graphsSigningNS<-lapply(colnames(summarySigningData),wrapperDfColumnPlot,df=summarySigningData,benchName="SigningTimes",fixParam="NAttr",xLabel="Number of Signers",scaleY=1)
+for(i in seq(1,length(graphsSigningNS),1)){
+  show(graphsSigningNS[[i]])
+}
+```
+
+```{r signingMultiPlotNS, echo=FALSE, fig.cap="Signing times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summarySigningData,"Signing","Number of signers","Time (ms)","Attributes")
+# ggsave("SignVaryNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r signingMultiPlotNattr, echo=FALSE, fig.cap="Signing times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summarySigningData,"Signing","Number of attributes","Time (ms)","Signers","NS")
+show(g)
+```
+
+```{r signingMultiPlotLinear, echo=FALSE, fig.cap="Signing times against number of attributes with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotAttr(summarySigningData,"Signing with linear trend","Number of attributes","Time (ms)")
+# ggsave("SignVaryAttrTrend.pdf", device = cairo_pdf)
+show(g)
+```
+
+##  Analysis of signature combination times
+Multiple files containing the times for different number of signers will be used, each file with times for different numbers of attributes. We will see that combination time does not depend on the number of attributes (because of how the combined signature is calculated).
+
+[//]: # Data treatment
+
+```{r combinationData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchCombineBLS461_NS-*.txt", sep="/"))
+combineData<-lapply(fileList,readRowFile)
+names(combineData)<-fileList
+meanCombineData<-lapply(combineData,meanTimes)
+sdCombineData<-summInDF(lapply(combineData,sdTimes))
+summaryCombineData<-summInDF(meanCombineData)
+```
+
+```{r combineSinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE,eval=FALSE}
+graphsCombineNAttr<-mapply(wrapperListPlot,df=meanCombineData,dfName=names(meanCombineData),benchName="CombineTimes",fixParam="NS",xLabel="Number of Attributes",scaleY=1,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsCombineNAttr),1)){
+  show(graphsCombineNAttr[[i]])
+}
+graphsCombineNS<-lapply(colnames(summaryCombineData),wrapperDfColumnPlot,df=summaryCombineData,benchName="CombineTimes",fixParam="NAttr",xLabel="Number of Signers",scaleY=1)
+for(i in seq(1,length(graphsCombineNS),1)){
+  show(graphsCombineNS[[i]])
+}
+```
+
+```{r combineMultiPlotNS, echo=FALSE, fig.cap="Signature combination times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryCombineData,"Signature combination","Number of signers","Time (ms)","Attributes")
+# ggsave("CombVaryNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r combineMultiPlotNattr, echo=FALSE, fig.cap="Signature combination  times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryCombineData,"Signature combination","Number of attributes","Time (ms)","Signers","NS")
+# ggsave("CombVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r combineMultiPlotLinear, echo=FALSE, fig.cap="Signature combination against number of signers with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotNS(summaryCombineData,"Signature combination with linear trend","Number of signers","Time (ms)")
+show(g)
+```
+
+##  Analysis of signature verification times
+Multiple files containing the times for different number of signers will be used, each file with times for different numbers of attributes. These times do not depend on the number of signers as verification only works with the final combined signature and aggregated verification key (in fact, when verifyin it is not necessary to know wether the signature was generated using distributed PS scheme or not).
+
+[//]: # Data treatment
+
+```{r verifyData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchVerifyBLS461_NS-*.txt", sep="/"))
+verifyData<-lapply(fileList,readRowFile)
+names(verifyData)<-fileList
+meanVerifyData<-lapply(verifyData,meanTimes)
+sdVerifyData<-summInDF(lapply(verifyData,sdTimes))
+summaryVerifyData<-summInDF(meanVerifyData)
+```
+
+```{r verifySinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE, eval=FALSE}
+graphsVerifyNAttr<-mapply(wrapperListPlot,df=meanVerifyData,dfName=names(meanVerifyData),benchName="VerifyTimes",fixParam="NS",xLabel="Number of Attributes",scaleY=5,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsVerifyNAttr),1)){
+  show(graphsVerifyNAttr[[i]])
+}
+graphsVerifyNS<-lapply(colnames(summaryVerifyData),wrapperDfColumnPlot,df=summaryVerifyData,benchName="VerifyTimes",fixParam="NAttr",xLabel="Number of Signers",scaleY=5)
+for(i in seq(1,length(graphsVerifyNS),1)){
+  show(graphsVerifyNS[[i]])
+}
+```
+
+```{r verifyMultiPlotNS, echo=FALSE, fig.cap="Signature verification times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryVerifyData,"Signature verification","Number of signers","Time (ms)","Attributes")
+# ggsave("VerifyVaryNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r verifyMultiPlotNattr, echo=FALSE, fig.cap="Signature verification times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryVerifyData,"Signature verification","Number of attributes","Time (ms)","Signers","NS")
+# ggsave("VerifyVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r verifyMultiPlotLinear, echo=FALSE, fig.cap="Signature verification against number of attributes with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotAttr(summaryVerifyData,"Signature verification with linear trend","Number of attributes","Time (ms)")
+show(g)
+```
+
+
+##Analysis of issuance (signing,combining and verifying) times
+```{r issuanceData,echo=FALSE,include=FALSE}
+summaryIssuanceData<-summarySigningData+summaryCombineData+summaryVerifyData
+verifyDataPercentage<-summaryVerifyData/summaryIssuanceData
+```
+
+```{r issuanceMultiPlotNS, echo=FALSE, fig.cap="Issuance times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryIssuanceData,"PS-MS Issuance","Number of signers","Time (ms)","Attributes")
+# ggsave("IssuanceTimesVaryNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r issuanceMultiPlotNattr, echo=FALSE, fig.cap="Issuance times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryIssuanceData,"PS-MS Issuance","Number of attributes","Time (ms)","Signers","NS")
+# ggsave("IssuanceTimesVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r issuanceMultiPlotLinearNS, echo=FALSE, fig.cap="Issuance times against number of signers with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotNS(summaryIssuanceData,"PS-MS Issuance with linear trend","Number of signers","Time (ms)")
+show(g)
+```
+
+```{r issuanceMultiPlotLinearNAttr, echo=FALSE, fig.cap="Issuance times against number of attributes with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotAttr(summaryIssuanceData,"PS Issuance with linear trend","Number of attributes","Time (ms)")
+show(g)
+```
+
+
+
+
+##  Analysis of zk proof generation times
+Multiple files containing the times for different (total) number of attributes will be used, each file with times for different numbers of revealed attributes.The number of revealed attributes goes from 0 (maybe not intresting) to all possible attributes in each case (so result is a triangular matrix)
+
+[//]: # Data treatment
+
+```{r zkProofData,echo=FALSE,include=FALSE}
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkProofBLS461_NAttr-*.txt", sep="/"))
+zkProofData<-lapply(fileList,readRowFile)
+names(zkProofData)<-fileList
+meanZkProofData<-lapply(zkProofData,meanTimes)
+sdZkProofData<-summInDF(lapply(zkProofData,sdTimes))
+summaryZkProofData<-summInDF(meanZkProofData)
+```
+
+```{r zkProofSinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE, eval=FALSE}
+graphsZkProofNRevealedAttr<-mapply(wrapperListPlot,df=meanZkProofData,dfName=names(meanZkProofData),benchName="ZkProofTimes",fixParam="NAttr",xLabel="Number of Revealed Attributes",scaleY=5,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsZkProofNRevealedAttr),1)){
+  show(graphsZkProofNRevealedAttr[[i]])
+}
+graphsZkProofNAttr<-lapply(colnames(summaryZkProofData),wrapperDfColumnPlot,df=summaryZkProofData,benchName="ZkProofTimes",fixParam="NRevealedAttr",xLabel="Number of attributes",scaleY=5)
+for(i in seq(1,length(graphsZkProofNAttr),1)){
+  show(graphsZkProofNAttr[[i]])
+}
+```
+
+```{r zkProofMultiPlotAttr, echo=FALSE, fig.cap="ZK proof generation times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryZkProofData,"ZK proof generation","Number of attributes","Time (ms)","Revealed attributes")
+# ggsave("ZkProofVaryAttr.pdf", device = cairo_pdf)
+show(g)
+
+```
+
+```{r zkProofMultiPlotRattr, echo=FALSE, fig.cap="ZK proof generation times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryZkProofData,"ZK proof generation","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
+# ggsave("ZkProofVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r zkProof3Dplot, echo=FALSE, fig.cap="ZK proof generation times",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+xAxe<-as.numeric(lapply(colnames(summaryZkProofData),parseToNumber))
+yAxe<-as.numeric(rownames(summaryZkProofData))
+g<-plot_ly(x=xAxe,y=yAxe,z = as.matrix(summaryZkProofData))%>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#  ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  )%>% 
+  layout(title="ZK proof generation times",
+         scene = list(
+           xaxis = list(title = "Number of revealed attributes",dtick=1),
+           yaxis = list(title = "Number of attributes",dtick=1),
+           zaxis = list(title = "Time(ms)")
+         ))
+show(g)
+```
+
+
+```{r zkProofDataAlternative,echo=FALSE,include=FALSE}
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkProofBLS461Alternative_NAttr-*.txt", sep="/"))
+zkProofDataAlternative<-lapply(fileList,readRowFile)
+names(zkProofDataAlternative)<-fileList
+meanZkProofDataAlternative<-lapply(zkProofDataAlternative,meanTimes)
+sdZkProofDataAlternative<-summInDF(lapply(zkProofDataAlternative,sdTimes))
+summaryZkProofDataAlternative<-summInDF(meanZkProofDataAlternative)
+```
+
+
+
+FIX NATTR
+
+```{r varyZkPRAttrDataComparisonWithAlternative,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("Reduced","MultiPair")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"Reduced"]= summaryZkProofData[nAttr,NS]
+  df[parseToNumber(NS),"MultiPair"]=summaryZkProofDataAlternative[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkPRAttrBarsComparisonWithAlternative, echo=FALSE, fig.cap="Time comparison between the two zk proof formulas for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK proof generation for",nAttr,"attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZkProofCompVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+FIX REVATRR
+
+
+```{r varyZkPAttrDataComparisonWithAlternative,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-01"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("Reduced","MultiPair")
+for(NS in numberOfAttributes){
+  df[NS,"Reduced"]= summaryZkProofData[NS,nRevealedAttr]
+  df[NS,"MultiPair"]=summaryZkProofDataAlternative[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkPAttrBarsComparisonWithAlternative, echo=FALSE, fig.cap="Time comparison between the two zk proof formulas for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof generation for",parseToNumber(nRevealedAttr) ,"revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZkProofCompVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+FIX HiddenAttr
+
+```{r varyZkPRAttrDataComparisonWithAlternativeHiddAttr,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("Reduced","MultiPair")
+for(i in seq_len(length(numberOfAttributes))){
+  df[numberOfAttributes[i],"Reduced"]= summaryZkProofData[numberOfAttributes[i],nRevealedAttr[i]]
+  df[numberOfAttributes[i],"MultiPair"]=summaryZkProofDataAlternative[numberOfAttributes[i],nRevealedAttr[i]]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkPRAttrBarsComparisonWithAlternativeHidAttr, echo=FALSE, fig.cap="Time comparison between the two zk proof formulas for 0 hidden attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof generation for 0 hidden attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZkProofComp0Hidden.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkPRAttrDataComparisonWithAlternativeHidAttr2,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-c("NoRevAttr-01","NoRevAttr-03","NoRevAttr-05","NoRevAttr-07")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("Reduced","MultiPair")
+for(i in seq_len(length(numberOfAttributes))){
+  df[numberOfAttributes[i],"Reduced"]= summaryZkProofData[numberOfAttributes[i],nRevealedAttr[i]]
+  df[numberOfAttributes[i],"MultiPair"]=summaryZkProofDataAlternative[numberOfAttributes[i],nRevealedAttr[i]]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkPRAttrBarsComparisonWithAlternativeHidAttr2, echo=FALSE, fig.cap="Time comparison between the two zk proof formulas for 0 hidden attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof generation for 1 hidden attribute"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZkProofComp1Hidden.pdf", device = cairo_pdf)
+show(g)
+```
+
+##  Analysis of zk proof verification times
+Multiple files containing the times for different (total) number of attributes will be used, each file with times for different numbers of revealed attributes.The number of revealed attributes goes from 0 (maybe not intresting) to all possible attributes in each case (so result is a triangular matrix)
+
+[//]: # Data treatment
+
+```{r zkVerifyData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkVerifyBLS461_NAttr-*.txt", sep="/"))
+zkVerifyData<-lapply(fileList,readRowFile)
+names(zkVerifyData)<-fileList
+meanZkVerifyData<-lapply(zkVerifyData,meanTimes)
+sdZkVerifyData<-summInDF(lapply(zkVerifyData,sdTimes))
+summaryZkVerifyData<-summInDF(meanZkVerifyData)
+```
+
+```{r zkVerifySinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE}
+graphsZkVerifyNRevealedAttr<-mapply(wrapperListPlot,df=meanZkVerifyData,dfName=names(meanZkVerifyData),benchName="ZkVerifyTimes",fixParam="NAttr",xLabel="Number of Revealed Attributes",scaleY=5,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsZkVerifyNRevealedAttr),1)){
+  show(graphsZkVerifyNRevealedAttr[[i]])
+}
+graphsZkVerifyNAttr<-lapply(colnames(summaryZkVerifyData),wrapperDfColumnPlot,df=summaryZkVerifyData,benchName="ZkVerifyTimes",fixParam="NRevealedAttr",xLabel="Number of attributes",scaleY=5)
+for(i in seq(1,length(graphsZkVerifyNAttr),1)){
+  show(graphsZkVerifyNAttr[[i]])
+}
+```
+
+```{r zkVerifyMultiPlotAttr, echo=FALSE, fig.cap="ZK proof verification times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryZkVerifyData,"ZK proof verification","Number of attributes","Time (ms)","Revealed attributes")
+# ggsave("ZkProofVerfVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r zkVerifyMultiPlotRAttr, echo=FALSE, fig.cap="ZK proof verification times times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryZkVerifyData,"ZK proof verification","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
+# ggsave("ZkProofVerfVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r zkVerify3Dplot, echo=FALSE, fig.cap="ZK proof verification times",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+xAxe<-as.numeric(lapply(colnames(summaryZkVerifyData),parseToNumber))
+yAxe<-as.numeric(rownames(summaryZkVerifyData))
+g<-plot_ly(x=xAxe,y=yAxe,z = as.matrix(summaryZkVerifyData))%>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  )%>% 
+  layout(title="ZK proof verification times",
+         scene = list(
+           xaxis = list(title = "Number of revealed attributes",dtick=1),
+           yaxis = list(title = "Number of attributes",dtick=1),
+           zaxis = list(title = "Time(ms)")
+         ))
+show(g)
+```
+
+```{r zkVerifyDataAlternative,echo=FALSE,include=FALSE}
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkVerifyBLS461Alternative_NAttr-*.txt", sep="/"))
+zkVerifyDataAlternative<-lapply(fileList,readRowFile)
+names(zkVerifyDataAlternative)<-fileList
+meanZkVerifyDataAlternative<-lapply(zkVerifyDataAlternative,meanTimes)
+sdZkVerifyDataAlternative<-summInDF(lapply(zkVerifyDataAlternative,sdTimes))
+summaryZkVerifyDataAlternative<-summInDF(meanZkVerifyDataAlternative)
+```
+
+
+
+FIX NATTR
+
+```{r varyZkVRAttrDataComparisonWithAlternative,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("Reduced","MultiPair")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"Reduced"]= summaryZkVerifyData[nAttr,NS]
+  df[parseToNumber(NS),"MultiPair"]=summaryZkVerifyDataAlternative[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVRAttrBarsComparisonWithAlternative, echo=FALSE, fig.cap="Time comparison between the two zk proof formulas for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk verification with 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+ggsave("ZkProofVerfCompVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+FIX REVATRR
+
+
+```{r varyZkVAttrDataComparisonWithAlternative,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-01"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("Reduced","MultiPair")
+for(NS in numberOfAttributes){
+  df[NS,"Reduced"]= summaryZkVerifyData[NS,nRevealedAttr]
+  df[NS,"MultiPair"]=summaryZkVerifyDataAlternative[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVAttrBarsComparisonWithAlternative, echo=FALSE, fig.cap="Time comparison between the two zk proof formulas for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk verification for 1 revealed attribute"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZkProofVerfCompVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+##  Comparison between multiple steps
+###  Signing, combination and verification
+Fix number of signers (5) and different numbers of attributes:
+```{r varyAttrData,echo=FALSE,include=FALSE}
+NS<-5
+numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
+rownames(df)<-lapply(numberOfAttributes,parseToNumber)
+colnames(df)<-c("Signing","Combine","Verify")
+for(nAttr in numberOfAttributes){
+  df[parseToNumber(nAttr),"Signing"]= summarySigningData[NS,nAttr]
+  df[parseToNumber(nAttr),"Combine"]=summaryCombineData[NS,nAttr]
+  df[parseToNumber(nAttr),"Verify"]=summaryVerifyData[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyAttrBars, echo=FALSE, fig.cap="Time comparison between signing, combination and verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+```{r varyAttrStackedBars, echo=FALSE, fig.cap="Time comparison between signing, combination and verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Issuance with",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IssuanceVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+
+
+Fix number of attributes(5) and different numbers of signers :
+```{r varyNSData,echo=FALSE,include=FALSE}
+numberOfSigners<-c("02","04","06","08")
+nAttr<-"NoAttr-05"
+df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=3))
+rownames(df)<-numberOfSigners
+colnames(df)<-c("Signing","Combine","Verify")
+for(NS in numberOfSigners){
+  df[NS,"Signing"]= summarySigningData[NS,nAttr]
+  df[NS,"Combine"]=summaryCombineData[NS,nAttr]
+  df[NS,"Verify"]=summaryVerifyData[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyNSBars, echo=FALSE, fig.cap="Time comparison between signing, combination and verification for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+```{r varyNSStackedBars, echo=FALSE, fig.cap="Time comparison between signing, combination and verification for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Issuance with",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IssuanceVaryNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+
+
+###  Zk proof generation and verification
+Fix number of revealed attributes (2) and varying number of total attributes.
+
+```{r varyZkAttrData,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-01"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("ZkProof","ZkVerify")
+for(NS in numberOfAttributes){
+  df[NS,"ZkProof"]= summaryZkProofData[NS,nRevealedAttr]
+  df[NS,"ZkVerify"]=summaryZkVerifyData[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkAttrBars, echo=FALSE, fig.cap="Time comparison between ZK proof generation and validation for multiple number (total) of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk presentation with 1 revealed attribute"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZKpresentVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkAttrStackedBars, echo=FALSE, fig.cap="Time comparison between ZK proof generation and validation for multiple number (total) of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Zk presentation with",parseToNumber(nRevealedAttr),"revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+
+```
+
+
+
+
+Fix number of attributes (9) and varying number of revealed attributes.
+
+```{r varyZkRAttrData,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("ZkProof","ZkVerify")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"ZkProof"]= summaryZkProofData[nAttr,NS]
+  df[parseToNumber(NS),"ZkVerify"]=summaryZkVerifyData[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkRAttrBars, echo=FALSE, fig.cap="Time comparison between ZK proof generation and validation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk presentation with 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("ZKpresentVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkRAttrStackedBars, echo=FALSE, fig.cap="Time comparison between ZK proof generation and validation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",nAttr,"attributes"),x="Number of evealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+
+```
+
+
+# Different Curves
+## BLS381
+```{r dataBLS381,echo=FALSE,include=FALSE}
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchSignBLS381_NS-*.txt", sep="/"))
+signingDataBLS381<-lapply(fileList,readRowFile)
+names(signingDataBLS381)<-fileList
+meanSigningDataBLS381<-lapply(signingDataBLS381,meanTimes)
+sdSigningDataBLS381<-summInDF(lapply(signingDataBLS381,sdTimes))
+summarySigningDataBLS381<-summInDF(meanSigningDataBLS381)
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchCombineBLS381_NS-*.txt", sep="/"))
+combineDataBLS381<-lapply(fileList,readRowFile)
+names(combineDataBLS381)<-fileList
+meanCombineDataBLS381<-lapply(combineDataBLS381,meanTimes)
+sdCombineDataBLS381<-summInDF(lapply(combineDataBLS381,sdTimes))
+summaryCombineDataBLS381<-summInDF(meanCombineDataBLS381)
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchVerifyBLS381_NS-*.txt", sep="/"))
+verifyDataBLS381<-lapply(fileList,readRowFile)
+names(verifyDataBLS381)<-fileList
+meanVerifyDataBLS381<-lapply(verifyDataBLS381,meanTimes)
+sdVerifyDataBLS381<-summInDF(lapply(verifyDataBLS381,sdTimes))
+summaryVerifyDataBLS381<-summInDF(meanVerifyDataBLS381)
+
+summaryIssuanceDataBLS381<-summarySigningDataBLS381+summaryCombineDataBLS381+summaryVerifyDataBLS381
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkProofBLS381_NAttr-*.txt", sep="/"))
+zkProofDataBLS381<-lapply(fileList,readRowFile)
+names(zkProofDataBLS381)<-fileList
+meanZkProofDataBLS381<-lapply(zkProofDataBLS381,meanTimes)
+sdZkProofDataBLS381<-summInDF(lapply(zkProofDataBLS381,sdTimes))
+summaryZkProofDataBLS381<-summInDF(meanZkProofDataBLS381)
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkVerifyBLS381_NAttr-*.txt", sep="/"))
+zkVerifyDataBLS381<-lapply(fileList,readRowFile)
+names(zkVerifyDataBLS381)<-fileList
+meanZkVerifyDataBLS381<-lapply(zkVerifyDataBLS381,meanTimes)
+sdZkVerifyDataBLS381<-summInDF(lapply(zkVerifyDataBLS381,sdTimes))
+summaryZkVerifyDataBLS381<-summInDF(meanZkVerifyDataBLS381)
+```
+
+
+
+Issuance (Fixing number of signers to 5 then fixing number of attributes to 5)
+```{r varyIssuanceBLS381,echo=FALSE,include=FALSE}
+NS<-"05"
+numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BLS381")
+for(nAttr in numberOfAttributes){
+  df[nAttr,"BLS461"]= summaryIssuanceData[NS,nAttr]
+  df[nAttr,"BLS381"]= summaryIssuanceDataBLS381[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyIssuanceBarsBLS381, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BLS381 for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuance time comparison BLS461-BLS381 for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+```{r varyNSDataBLS381,echo=FALSE,include=FALSE}
+numberOfSigners<-c("02","04","06","08")
+nAttr<-"NoAttr-05"
+df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=2))
+rownames(df)<-numberOfSigners
+colnames(df)<-c("BLS461","BLS381")
+for(NS in numberOfSigners){
+  df[NS,"BLS461"]= summaryIssuanceData[NS,nAttr]
+  df[NS,"BLS381"]=summaryIssuanceDataBLS381[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyNSBarsBLS381, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BLS381 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuane time comparison BLS461-BLS381 for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+ZK proof (Fixing number of attributes to 9 then fixing number of rvealed attributes to 2)
+Fix number of total attributes (9)
+```{r varyZkRAttrDataComparisonBLS381,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-nRevealedAttr
+colnames(df)<-c("BLS461","BLS381")
+for(NS in nRevealedAttr){
+  df[NS,"BLS461"]= summaryZkProofData[nAttr,NS]
+  df[NS,"BLS381"]=summaryZkProofDataBLS381[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkRAttrBarsComparisonBLS381, echo=FALSE, fig.cap="Time comparison between BLS461 and BLS381 ZK proof generation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK proof time comparison BLS461-BLS381 for",nAttr," attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+```{r varyZkAttrDataComparisonBLS381,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BLS381")
+for(NS in numberOfAttributes){
+  df[NS,"BLS461"]= summaryZkProofData[NS,nRevealedAttr]
+  df[NS,"BLS381"]=summaryZkProofDataBLS381[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkAttrBarsComparisonBLS381, echo=FALSE, fig.cap="Time comparison between BLS461 and BLS381 ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK proof time comparison BLS461-BLS381 for",parseToNumber(nRevealedAttr),"revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+
+ZK verification (Fixing number of attributes to 9 then fixing number of rvealed attributes to 2)
+```{r varyZkVRAttrDataComparisonBLS381,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-nRevealedAttr
+colnames(df)<-c("BLS461","BLS381")
+for(NS in nRevealedAttr){
+  df[NS,"BLS461"]= summaryZkVerifyData[nAttr,NS]
+  df[NS,"BLS381"]= summaryZkVerifyDataBLS381[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVRAttrBarsComparisonBLS381, echo=FALSE, fig.cap="Time comparison between BLS461 and BLS381 ZK proof verification for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK verification time comparison BLS461-BLS381 for",nAttr," attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+```{r varyZkVAttrDataComparisonBLS381,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BLS381")
+for(NS in numberOfAttributes){
+  df[NS,"BLS461"]= summaryZkVerifyData[NS,nRevealedAttr]
+  df[NS,"BLS381"]= summaryZkVerifyDataBLS381[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVAttrBarsComparisonBLS381, echo=FALSE, fig.cap="Time comparison between BLS461 and BLS381 ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK verification time comparison BLS461-BLS381 for",parseToNumber(nRevealedAttr),"revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+## BN254
+```{r dataBN254,echo=FALSE,include=FALSE}
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchSignBN254_NS-*.txt", sep="/"))
+signingDataBN254<-lapply(fileList,readRowFile)
+names(signingDataBN254)<-fileList
+meanSigningDataBN254<-lapply(signingDataBN254,meanTimes)
+sdSigningDataBN254<-summInDF(lapply(signingDataBN254,sdTimes))
+summarySigningDataBN254<-summInDF(meanSigningDataBN254)
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchCombineBN254_NS-*.txt", sep="/"))
+combineDataBN254<-lapply(fileList,readRowFile)
+names(combineDataBN254)<-fileList
+meanCombineDataBN254<-lapply(combineDataBN254,meanTimes)
+sdCombineDataBN254<-summInDF(lapply(combineDataBN254,sdTimes))
+summaryCombineDataBN254<-summInDF(meanCombineDataBN254)
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchVerifyBN254_NS-*.txt", sep="/"))
+verifyDataBN254<-lapply(fileList,readRowFile)
+names(verifyDataBN254)<-fileList
+meanVerifyDataBN254<-lapply(verifyDataBN254,meanTimes)
+sdVerifyDataBN254<-summInDF(lapply(verifyDataBN254,sdTimes))
+summaryVerifyDataBN254<-summInDF(meanVerifyDataBN254)
+
+summaryIssuanceDataBN254<-summarySigningDataBN254+summaryCombineDataBN254+summaryVerifyDataBN254
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkProofBN254_NAttr-*.txt", sep="/"))
+zkProofDataBN254<-lapply(fileList,readRowFile)
+names(zkProofDataBN254)<-fileList
+meanZkProofDataBN254<-lapply(zkProofDataBN254,meanTimes)
+sdZkProofDataBN254<-summInDF(lapply(zkProofDataBN254,sdTimes))
+summaryZkProofDataBN254<-summInDF(meanZkProofDataBN254)
+
+fileList<-Sys.glob(paste(dataDirectory,"BenchZkVerifyBN254_NAttr-*.txt", sep="/"))
+zkVerifyDataBN254<-lapply(fileList,readRowFile)
+names(zkVerifyDataBN254)<-fileList
+meanZkVerifyDataBN254<-lapply(zkVerifyDataBN254,meanTimes)
+sdZkVerifyDataBN254<-summInDF(lapply(zkVerifyDataBN254,sdTimes))
+summaryZkVerifyDataBN254<-summInDF(meanZkVerifyDataBN254)
+```
+
+
+
+Issuance (Fixing number of signers to 5 then fixing number of attributes to 5)
+```{r varyIssuanceBN254,echo=FALSE,include=FALSE}
+NS<-"05"
+numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BN254")
+for(nAttr in numberOfAttributes){
+  df[nAttr,"BLS461"]= summaryIssuanceData[NS,nAttr]
+  df[nAttr,"BN254"]= summaryIssuanceDataBN254[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyIssuanceBarsBN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuance time comparison BLS461-BN254 for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+```{r varyNSDataBN254,echo=FALSE,include=FALSE}
+numberOfSigners<-c("02","04","06","08")
+nAttr<-"NoAttr-05"
+df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=2))
+rownames(df)<-numberOfSigners
+colnames(df)<-c("BLS461","BN254")
+for(NS in numberOfSigners){
+  df[NS,"BLS461"]= summaryIssuanceData[NS,nAttr]
+  df[NS,"BN254"]=summaryIssuanceDataBN254[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyNSBarsBN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuane time comparison BLS461-BN254 for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+ZK proof (Fixing number of attributes to 9 then fixing number of rvealed attributes to 2)
+Fix number of total attributes (9)
+```{r varyZkRAttrDataComparisonBN254,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-nRevealedAttr
+colnames(df)<-c("BLS461","BN254")
+for(NS in nRevealedAttr){
+  df[NS,"BLS461"]= summaryZkProofData[nAttr,NS]
+  df[NS,"BN254"]=summaryZkProofDataBN254[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkRAttrBarsComparisonBN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof generation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK proof time comparison BLS461-BN254 for",nAttr," attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+```{r varyZkAttrDataComparisonBN254,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BN254")
+for(NS in numberOfAttributes){
+  df[NS,"BLS461"]= summaryZkProofData[NS,nRevealedAttr]
+  df[NS,"BN254"]=summaryZkProofDataBN254[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkAttrBarsComparisonBN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK proof time comparison BLS461-BN254 for",parseToNumber(nRevealedAttr),"revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+ZK verification (Fixing number of attributes to 9 then fixing number of rvealed attributes to 2)
+```{r varyZkVRAttrDataComparisonBN254,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-nRevealedAttr
+colnames(df)<-c("BLS461","BN254")
+for(NS in nRevealedAttr){
+  df[NS,"BLS461"]= summaryZkVerifyData[nAttr,NS]
+  df[NS,"BN254"]= summaryZkVerifyDataBN254[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVRAttrBarsComparisonBN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof verification for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK verification time comparison BLS461-BN254 for",nAttr," attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+```{r varyZkVAttrDataComparisonBN254,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BN254")
+for(NS in numberOfAttributes){
+  df[NS,"BLS461"]= summaryZkVerifyData[NS,nRevealedAttr]
+  df[NS,"BN254"]= summaryZkVerifyDataBN254[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVAttrBarsComparisonBN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("ZK verification time comparison BLS461-BN254 for",parseToNumber(nRevealedAttr),"revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+## BLS461+BLS381+BN254
+Issuance (Fixing number of signers to 5 then fixing number of attributes to 5)
+```{r varyIssuanceBLS381BN254,echo=FALSE,include=FALSE}
+NS<-"05"
+numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
+rownames(df)<-lapply(numberOfAttributes,parseToNumber)
+colnames(df)<-c("BLS461","BLS381","BN254")
+for(nAttr in numberOfAttributes){
+  df[parseToNumber(nAttr),"BLS461"]= summaryIssuanceData[NS,nAttr]
+  df[parseToNumber(nAttr),"BLS381"]= summaryIssuanceDataBLS381[NS,nAttr]
+  df[parseToNumber(nAttr),"BN254"]= summaryIssuanceDataBN254[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyIssuanceBarsBLS381BN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuance comparison BLS461-BLS381-BN254 for 5 signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("CurveIssuanceVarAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+```{r varyNSDataBLS381BN254,echo=FALSE,include=FALSE}
+numberOfSigners<-c("02","04","06","08")
+nAttr<-"NoAttr-05"
+df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=3))
+rownames(df)<-numberOfSigners
+colnames(df)<-c("BLS461","BLS381","BN254")
+for(NS in numberOfSigners){
+  df[NS,"BLS461"]= summaryIssuanceData[NS,nAttr]
+  df[NS,"BLS381"]= summaryIssuanceDataBLS381[NS,nAttr]
+  df[NS,"BN254"]=summaryIssuanceDataBN254[NS,nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyNSBarsBLS381BN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuane comparison BLS461-BLS381-BN254 for 5 attributes"),x="Number of signers", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("CurveIssuanceVarNS.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+ZK proof (Fixing number of attributes to 9 then fixing number of rvealed attributes to 2)
+Fix number of total attributes (9)
+```{r varyZkRAttrDataComparisonBLS381BN254,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("BLS461","BLS381","BN254")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"BLS461"]= summaryZkProofData[nAttr,NS]
+  df[parseToNumber(NS),"BLS381"]= summaryZkProofDataBLS381[nAttr,NS]
+  df[parseToNumber(NS),"BN254"]=summaryZkProofDataBN254[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkRAttrBarsComparisonBLS381BN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof generation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof BLS461-BLS381-BN254 for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("CurveZkProofVarRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+```{r varyZkAttrDataComparisonBLS381BN254,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BLS381","BN254")
+for(NS in numberOfAttributes){
+  df[NS,"BLS461"]= summaryZkProofData[NS,nRevealedAttr]
+  df[NS,"BLS381"]= summaryZkProofDataBLS381[NS,nRevealedAttr]
+  df[NS,"BN254"]=summaryZkProofDataBN254[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkAttrBarsComparisonBLS381BN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof BLS461-BLS381-BN254 for 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("CurveZkProofVarAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+ZK verification (Fixing number of attributes to 9 then fixing number of rvealed attributes to 2)
+```{r varyZkVRAttrDataComparisonBLS381BN254,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("BLS461","BLS381","BN254")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"BLS461"]= summaryZkVerifyData[nAttr,NS]
+  df[parseToNumber(NS),"BLS381"]= summaryZkVerifyDataBLS381[nAttr,NS]
+  df[parseToNumber(NS),"BN254"]= summaryZkVerifyDataBN254[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVRAttrBarsComparisonBLS381BN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof verification for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk verification BLS461-BLS381-BN254 for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("CurveZkVerfVarRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+```{r varyZkVAttrDataComparisonBLS381BN254,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("BLS461","BLS381","BN254")
+for(NS in numberOfAttributes){
+  df[NS,"BLS461"]= summaryZkVerifyData[NS,nRevealedAttr]
+  df[NS,"BLS381"]= summaryZkVerifyDataBLS381[NS,nRevealedAttr]
+  df[NS,"BN254"]= summaryZkVerifyDataBN254[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVAttrBarsComparisonBLS381BN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk verification BLS461-BLS381-BN254 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+ggsave("CurveZkVerfVarAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+
+# Idemix (CL RSA 2048 bits)
+
+## Issuance
+```{r issuanceIdemixData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchIdemixIssuance.txt", sep="/"))
+idemixIssuance<-lapply(fileList,readRowFile)
+names(idemixIssuance)<-fileList
+meanidemixIssuance<-lapply(idemixIssuance,meanTimes)[[1]]
+sdIdemixIssuance<-lapply(idemixIssuance,sdTimes)[[1]]
+```
+
+```{r issuanceIdemixPlot, echo=FALSE, fig.cap="Times for Idemix issuance",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-plotData(xValues=lapply(colnames(meanidemixIssuance),parseToNumber),yValues=meanidemixIssuance[1,],title = "Idemix Issuance ",labX="Number of attributes",labY="Time (ms)",scaleY=5)
+# ggsave("IdemixIssuancePlot.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r issuanceIdemixPlotTrend, echo=FALSE, fig.cap="Times for Idemix issuance with linear trend for 50 repetitions of each experiment",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-lineartrendPlotAttr(idemixIssuance[[1]],paste("Idemix issuance linear trend for",nrow(idemixIssuance[[1]]),"repetitions"),"Number of attributes","Time (ms)")
+show(g)
+```
+
+
+## Zk proof generation
+
+```{r zkProofIdemixData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchIdemixZkProof_NAttr-*.txt", sep="/"))
+zkProofDataIdemix<-lapply(fileList,readRowFile)
+names(zkProofDataIdemix)<-fileList
+meanzkProofDataIdemix<-lapply(zkProofDataIdemix,meanTimes)
+sdzkProofDataIdemix<-summInDF(lapply(zkProofDataIdemix,sdTimes))
+summaryzkProofDataIdemix<-summInDF(meanzkProofDataIdemix)
+
+```
+
+```{r zkProofIdemixSinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE, eval=FALSE}
+graphsZkProofNRevealedAttr<-mapply(wrapperListPlot,df=meanzkProofDataIdemix,dfName=names(meanzkProofDataIdemix),benchName="Idemix ZkProofTimes",fixParam="NAttr",xLabel="Number of Revealed Attributes",scaleY=5,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsZkProofNRevealedAttr),1)){
+  show(graphsZkProofNRevealedAttr[[i]])
+}
+graphsZkProofNAttr<-lapply(colnames(summaryzkProofDataIdemix),wrapperDfColumnPlot,df=summaryzkProofDataIdemix,benchName="Idemix ZkProofTimes",fixParam="NRevealedAttr",xLabel="Number of attributes",scaleY=5)
+for(i in seq(1,length(graphsZkProofNAttr),1)){
+  show(graphsZkProofNAttr[[i]])
+}
+```
+
+```{r zkProofIdemixMultiPlotAttr, echo=FALSE, fig.cap="ZK proof generation times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryzkProofDataIdemix,"Idemix ZK proof generation","Number of attributes","Time (ms)","Revealed attributes")
+show(g)
+
+```
+
+```{r zkProofIdemixMultiPlotRattr, echo=FALSE, fig.cap="ZK proof generation times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryzkProofDataIdemix,"Idemix Zk proof generation","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
+# ggsave("IdemixZkProof.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r zkProofIdemix3Dplot, echo=FALSE, fig.cap="ZK proof generation times",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+xAxe<-as.numeric(lapply(colnames(summaryzkProofDataIdemix),parseToNumber))
+yAxe<-as.numeric(rownames(summaryzkProofDataIdemix))
+g<-plot_ly(x=xAxe,y=yAxe,z = as.matrix(summaryzkProofDataIdemix))%>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  )%>% 
+  layout(title="Idemix ZK proof generation times",
+         scene = list(
+           xaxis = list(title = "Number of revealed attributes",dtick=1),
+           yaxis = list(title = "Number of attributes",dtick=1),
+           zaxis = list(title = "Time(ms)")
+         ))
+show(g)
+```
+
+
+## Zk proof verification
+
+```{r zkVerifyIdemixData,echo=FALSE,include=FALSE}
+fileList<-Sys.glob(paste(dataDirectory,"BenchIdemixZkVerify_NAttr-*.txt", sep="/"))
+zkVerifyDataIdemix<-lapply(fileList,readRowFile)
+names(zkVerifyDataIdemix)<-fileList
+meanzkVerifyDataIdemix<-lapply(zkVerifyDataIdemix,meanTimes)
+sdzkVerifyDataIdemix<-summInDF(lapply(zkVerifyDataIdemix,sdTimes))
+summaryzkVerifyDataIdemix<-summInDF(meanzkVerifyDataIdemix)
+```
+
+```{r zkVerifyIdemixSinglePlots, ,eval=FALSE,echo=FALSE,include=FALSE, warning=FALSE, eval=FALSE}
+graphsZkVerifyNRevealedAttr<-mapply(wrapperListPlot,df=meanzkVerifyDataIdemix,dfName=names(meanzkVerifyDataIdemix),benchName="Idemix ZkVerifyTimes",fixParam="NAttr",xLabel="Number of Revealed Attributes",scaleY=5,SIMPLIFY = FALSE)
+for(i in seq(1,length(graphsZkVerifyNRevealedAttr),1)){
+  show(graphsZkVerifyNRevealedAttr[[i]])
+}
+graphsZkVerifyNAttr<-lapply(colnames(summaryzkVerifyDataIdemix),wrapperDfColumnPlot,df=summaryzkVerifyDataIdemix,benchName="Idemix ZkVerifyTimes",fixParam="NRevealedAttr",xLabel="Number of attributes",scaleY=5)
+for(i in seq(1,length(graphsZkVerifyNAttr),1)){
+  show(graphsZkVerifyNAttr[[i]])
+}
+```
+
+```{r zkVerifyIdemixMultiPlotAttr, echo=FALSE, fig.cap="ZK proof verification times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotColumns(summaryzkVerifyDataIdemix,"Idemix Zk proof verification","Number of attributes","Time (ms)","Revealed attributes")
+# ggsave("IdemixZkVerf.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r zkVerifyIdemixMultiPlotRAttr, echo=FALSE, fig.cap="ZK proof verification times times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-multilinePlotRows(summaryzkVerifyDataIdemix,"Idemix ZK proof verification","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
+show(g)
+```
+
+```{r zkVerifyIdemix3Dplot, echo=FALSE, fig.cap="ZK proof verification times",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+xAxe<-as.numeric(lapply(colnames(summaryzkProofDataIdemix),parseToNumber))
+yAxe<-as.numeric(rownames(summaryzkProofDataIdemix))
+g<-plot_ly(x=xAxe,y=yAxe,z = as.matrix(summaryzkVerifyDataIdemix))%>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  )%>% 
+  layout(title="Idemix ZK proof verification times",
+         scene = list(
+           xaxis = list(title = "Number of revealed attributes",dtick=1),
+           yaxis = list(title = "Number of attributes",dtick=1),
+           zaxis = list(title = "Time(ms)")
+         ))
+show(g)
+```
+
+
+
+
+# Comparison of PS and Idemix
+## Issuance
+Just 2 signers
+```{r varyIssuanceDataComparison,echo=FALSE,include=FALSE}
+NS<-"02"
+numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(numberOfAttributes,parseToNumber)
+colnames(df)<-c("PS","Idemix")
+for(nAttr in numberOfAttributes){
+  df[parseToNumber(nAttr),"PS"]= summaryIssuanceData[NS,nAttr]
+  df[parseToNumber(nAttr),"Idemix"]=meanidemixIssuance[nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyIssuanceBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuance comparison using 2 signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IdemixIssuance2NS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyIssuanceStackedBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+Using 10 signers for PS
+```{r varyIssuanceDataComparison10,echo=FALSE,include=FALSE}
+NS<-"10"
+numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(numberOfAttributes,parseToNumber)
+colnames(df)<-c("PS","Idemix")
+for(nAttr in numberOfAttributes){
+  df[parseToNumber(nAttr),"PS"]= summaryIssuanceData[NS,nAttr]
+  df[parseToNumber(nAttr),"Idemix"]=meanidemixIssuance[nAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyIssuanceBarsComparison10, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Issuance comparison using 10 signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IdemixIssuance10NS.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyIssuanceStackedBarsComparison10, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+
+```
+
+## Zk proof generation
+Fix number of total attributes (9)
+```{r varyZkRAttrDataComparison,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("PS","Idemix")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"PS"]= summaryZkProofData[nAttr,NS]
+  df[parseToNumber(NS),"Idemix"]=summaryzkProofDataIdemix[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkRAttrBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof generation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof comparison for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IdemixZkProofCompVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkRAttrStackedBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof generation for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",nAttr," attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+Fix number of revealed attributes (2)
+
+```{r varyZkAttrDataComparison,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("PS","Idemix")
+for(NS in numberOfAttributes){
+  df[NS,"PS"]= summaryZkProofData[NS,nRevealedAttr]
+  df[NS,"Idemix"]=summaryzkProofDataIdemix[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkAttrBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk proof comparison for 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IdemixZkProofCompVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkAttrStackedBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",parseToNumber(nRevealedAttr),"attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+
+
+
+## Zk proof verification
+Fix number of total attributes (9)
+```{r varyZkVRAttrDataComparison,echo=FALSE,include=FALSE}
+nAttr<-"09"
+nRevealedAttr<-c("NoRevAttr-02","NoRevAttr-04","NoRevAttr-06","NoRevAttr-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-lapply(nRevealedAttr,parseToNumber)
+colnames(df)<-c("PS","Idemix")
+for(NS in nRevealedAttr){
+  df[parseToNumber(NS),"PS"]= summaryZkVerifyData[nAttr,NS]
+  df[parseToNumber(NS),"Idemix"]=summaryzkVerifyDataIdemix[nAttr,NS]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVRAttrBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof verification for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk verification comparison for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+# ggsave("IdemixZkVerfCompVaryRevAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkVRAttrStackedBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof verification for multiple number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",nAttr," attributes"),x="Number of revealed attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+Fix number of revealed attributes (2)
+
+
+```{r varyZkVAttrDataComparison,echo=FALSE,include=FALSE}
+numberOfAttributes<-c("02","04","06","08")
+nRevealedAttr<-"NoRevAttr-02"
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+rownames(df)<-numberOfAttributes
+colnames(df)<-c("PS","Idemix")
+for(NS in numberOfAttributes){
+  df[NS,"PS"]= summaryZkVerifyData[NS,nRevealedAttr]
+  df[NS,"Idemix"]=summaryzkVerifyDataIdemix[NS,nRevealedAttr]
+}
+df$group<-rownames(df)
+meltedDF<-melt(data=df,id.vars="group")
+```
+
+
+```{r varyZkVAttrBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
+  geom_bar(position="dodge", stat="identity")+
+  labs(fill="Step",title = paste("Zk verification comparison for 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+ggsave("IdemixZkVerfCompVaryAttr.pdf", device = cairo_pdf)
+show(g)
+```
+
+```{r varyZkVAttrStackedBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
+g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
+  geom_bar(position="stack", stat="identity")+
+  labs(fill="Step",title = paste("Time comparison for",parseToNumber(nRevealedAttr),"attributes"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()
+show(g)
+```
+
+
+
+
+# Statistical significance tests
+```{r descDist, echo=FALSE}
+dat<-zkProofData[[10]]$`NoRevAttr-07`
+mean(dat)
+sd(dat)
+descdist(dat,boot=1000)
+```
+
+
+```{r estadisticosPerm, echo=FALSE, include=FALSE}
+#data tiene una columna con nombre de la curva y otra con valor de tiempo. permGrp es una permutacion de la primera columna, nombres los usados en la columna de nombres. Se quiere comparar si el segundo tiene tiempos mayores que el primero
+statSecondMinusFirst <- function(data,permGrp,firstName,secondName){
+  return(mean(data[permGrp == secondName]) - mean(data[permGrp == firstName]))
+}
+
+#data tiene una columna con nombre de la curva y otra con valor de tiempo. permGrp es una permutacion de la primera columna, nombres los usados en la columna de nombres. Se quiere comparar si el tercero tiene tiempos mayores que el segundo, y este tiene tiempos mayores que el primero
+statThirdBiggerSecondBiggerFirst <- function(data,permGrp,firstName,secondName,thirdName){
+    diff1<-mean(data[permGrp == secondName]) - mean(data[permGrp == firstName])
+    diff2<-mean(data[permGrp == thirdName]) - mean(data[permGrp == secondName])
+    return(min(diff1,diff2))
+}
+
+#Estimar el p-valor a partir de los estadisticos de las permutaciones y el estadistico real. 
+monteCarlo<- function(estadPerm,real,orientacion=1){
+  if (orientacion==1){
+    estadBin<-(estadPerm>=real)
+  } else{
+    estadBin<-(estadPerm<=real)
+  }
+  p<-(1+length(estadPerm[estadBin]))/(1+length(estadPerm))
+  
+  test<-binom.test(1+length(estadPerm[estadBin]), 1+length(estadPerm), p = 0.05,
+                   alternative = "less",
+                   conf.level = 0.99)
+  return(list(p.value = p,conf.int = test$conf.int))
+}
+normalDensity <- function(x){
+  return(stats::dnorm(x = x,mean = mu,sd = sigma))
+}
+```
+
+## BLS461 vs Idemix
+
+```{r statSignificanceIssuaneBLS461Idemix, echo=FALSE}
+NS<-10
+NAttr<-2
+numberOfPermutations<-1000
+data1<-signingData[[9]]$`NoAttr-02`+combineData[[9]]$`NoAttr-02`+verifyData[[9]]$`NoAttr-02`
+name1<-"BLS461"
+data2<-idemixIssuance[[1]]$`NoAttr-02`
+name2<-"Idemix"
+data<-c(data1,data2)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
+df<-data.frame(names,data)
+realStat<-statSecondMinusFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statSecondMinusFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceIssuane2BLS461Idemix, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("Issuance BLS461 and Idemix, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for issuance time comparison between',name1,'and',name2,'for',NAttr,'attributes and',NS,'servers\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+
+```{r statSignificanceZKproofBLS461Idemix, echo=FALSE}
+NAttr<-1
+NRevAttr<-0
+numberOfPermutations<-1000
+data1<-zkProofData[[1]]$`NoRevAttr-00`
+name1<-"BLS461"
+data2<-zkProofDataIdemix[[1]]$`NoRevAttr-00`
+name2<-"Idemix"
+data<-c(data1,data2)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
+df<-data.frame(names,data)
+realStat<-statSecondMinusFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statSecondMinusFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKproof2BLS461Idemix, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZK proof BLS461 and Idemix, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk proof time comparison between',name1,'and',name2,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+```{r statSignificanceZKverifyBLS461Idemix, echo=FALSE}
+NAttr<-10
+NRevAttr<-5
+numberOfPermutations<-1000
+data1<-zkVerifyData[[10]]$`NoRevAttr-05`
+name1<-"BLS461"
+data2<-zkVerifyDataIdemix[[10]]$`NoRevAttr-05`
+name2<-"Idemix"
+data<-c(data1,data2)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
+df<-data.frame(names,data)
+realStat<-statSecondMinusFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statSecondMinusFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKverify2BLS461Idemix, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZK verf BLS461 and Idemix, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk verification time comparison between',name1,'and',name2,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+
+## BLS461 vs BLS381 vs BN254
+```{r statSignificanceIssuaneBLS461BLS381BN254, echo=FALSE}
+NS<-10
+NAttr<-5
+numberOfPermutations<-1000
+data1<-signingDataBN254[[9]]$`NoAttr-05`+combineDataBN254[[9]]$`NoAttr-05`+verifyDataBN254[[9]]$`NoAttr-05`
+name1<-"BN254"
+data2<-signingDataBLS381[[9]]$`NoAttr-05`+combineDataBLS381[[9]]$`NoAttr-05`+verifyDataBLS381[[9]]$`NoAttr-05`
+name2<-"BLS381"
+data3<-signingData[[9]]$`NoAttr-05`+combineData[[9]]$`NoAttr-05`+verifyData[[9]]$`NoAttr-05`
+name3<-"BLS461"
+data<-c(data1,data2,data3)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)),rep(name3,length(data3)))
+df<-data.frame(names,data)
+realStat<-statThirdBiggerSecondBiggerFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2,thirdName = name3)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statThirdBiggerSecondBiggerFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2, thirdName = name3))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceIssuane2BLS461BLS381BN254, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("Issuance BLS461 BLS381 and BN254, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for issuance time comparison between',name1,',',name2,'and',name3,'for',NAttr,'attributes and',NS,'servers\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+
+
+```{r statSignificancezkProofBLS461BLS381BN254, echo=FALSE}
+NAttr<-10
+NRevAttr<-5
+numberOfPermutations<-1000
+data1<-zkProofDataBN254[[10]]$`NoRevAttr-05`
+name1<-"BN254"
+data2<-zkProofDataBLS381[[10]]$`NoRevAttr-05`
+name2<-"BLS381"
+data3<-zkProofData[[10]]$`NoRevAttr-05`
+name3<-"BLS461"
+data<-c(data1,data2,data3)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)),rep(name3,length(data3)))
+df<-data.frame(names,data)
+realStat<-statThirdBiggerSecondBiggerFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2,thirdName = name3)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statThirdBiggerSecondBiggerFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2, thirdName = name3))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKproof2BLS461BLS381BN254, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZkProof BLS461 BLS381 and BN254, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk proof generation time comparison between',name1,',',name2,'and',name3,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+```{r statSignificanceZKverifyBLS461BLS381BN254, echo=FALSE}
+NAttr<-10
+NRevAttr<-5
+numberOfPermutations<-1000
+data1<-zkVerifyDataBN254[[10]]$`NoRevAttr-05`
+name1<-"BN254"
+data2<-zkVerifyDataBLS381[[10]]$`NoRevAttr-05`
+name2<-"BLS381"
+data3<-zkVerifyData[[10]]$`NoRevAttr-05`
+name3<-"BLS461"
+data<-c(data1,data2,data3)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)),rep(name3,length(data3)))
+df<-data.frame(names,data)
+realStat<-statThirdBiggerSecondBiggerFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2,thirdName = name3)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statThirdBiggerSecondBiggerFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2, thirdName = name3))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKverify2BLS461BLS381BN254, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZKVerf BLS461 BLS381 and BN254, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk verification time comparison between',name1,',',name2,'and',name3,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+
+## Methods for ZK proof and Verification (using BLS461)
+
+Proof generation
+
+```{r statSignificanceZKproofBLS461Alternative, echo=FALSE}
+NAttr<-10
+NRevAttr<-9
+numberOfPermutations<-1000
+data1<-zkProofData[[NAttr]]$`NoRevAttr-09`
+name1<-"Reduced"
+data2<-zkProofDataAlternative[[NAttr]]$`NoRevAttr-09`
+name2<-"MultiPair"
+data<-c(data1,data2)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
+df<-data.frame(names,data)
+realStat<-statSecondMinusFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statSecondMinusFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKproof2BLS461Alternative, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZkProof Reduced and Alternative, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk proof time comparison between',name1,'and',name2,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+```{r statSignificanceZKproofBLS461AlternativeFewHidden2, echo=FALSE}
+NAttr<-2
+NRevAttr<-1
+numberOfPermutations<-1000
+data1<-zkProofData[[NAttr]]$`NoRevAttr-01`
+name1<-"Reduced"
+data2<-zkProofDataAlternative[[NAttr]]$`NoRevAttr-01`
+name2<-"MultiPair"
+data<-c(data1,data2)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
+df<-data.frame(names,data)
+realStat<-statSecondMinusFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statSecondMinusFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKproof2BLS461AlternativeFewHidden2, echo=FALSE}
+shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZkProof Reduced and Alternative, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk proof time comparison between',name1,'and',name2,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```
+
+Proof verification
+
+```{r statSignificanceZKverifyBLS461Alternative, echo=FALSE}
+NAttr<-1
+NRevAttr<-1
+numberOfPermutations<-1000
+data1<-zkVerifyData[[NAttr]]$`NoRevAttr-01`
+name1<-"Reduced"
+data2<-zkVerifyDataAlternative[[NAttr]]$`NoRevAttr-01`
+name2<-"MultiPair"
+data<-c(data1,data2)
+names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
+df<-data.frame(names,data)
+realStat<-statSecondMinusFirst(data = df$data, permGrp = df$names, firstName = name1, secondName = name2)
+permStat<-numeric(length=numberOfPermutations)
+N<-nrow(df)
+set.seed(1234)
+for(i in seq_len(numberOfPermutations)){
+  perm<-shuffle(N)
+  permStat[i]<-with(df,statSecondMinusFirst(data = df$data, permGrp = df$names[perm], firstName = name1, secondName = name2))
+}
+pValueMonte<-monteCarlo(permStat,realStat)
+```
+
+```{r statSignificanceZKverify2BLS461Alternative, echo=FALSE}
+#shapiro.test(permStat)
+ajuste<-fitdist(permStat,"norm")
+mu<-ajuste$estimate[1]
+sigma<-ajuste$estimate[2]
+pValueFit<-pnorm(realStat,mean = mu,sd = sigma,lower.tail = FALSE)
+curve( expr = normalDensity,
+       xlim = c(min(permStat), max(c(permStat,realStat))),
+       col  = "steelblue",
+       lwd  = 5,
+       xlab = "Statistic",
+       ylab = "Frequency", 
+       main = paste0("ZkVerf Reduced and Alternative, number of permutations = ", numberOfPermutations) )
+histogram <- hist( x      = permStat,
+                   prob   = TRUE,
+                   add    = TRUE, 
+                   breaks = numberOfPermutations / (0.01 * numberOfPermutations) )
+rug(permStat)
+abline(v = realStat, lty = 1, lwd = 3, col = "darkred")
+
+cat('Statistical significance test for zk verification time comparison between',name1,'and',name2,'for',NAttr,'attributes and',NRevAttr,'revealed attributes\nMontecarlo: p-value', pValueMonte$p.value,'Confidence interval (',pValueMonte$conf.int,')\nDistribution fitting: p-value',pValueFit)
+```

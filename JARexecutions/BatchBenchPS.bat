@@ -1,0 +1,3 @@
+call BatchBenchKeyGeneration.bat
+call BatchBenchSigning.bat
+call BatchBenchZK.bat

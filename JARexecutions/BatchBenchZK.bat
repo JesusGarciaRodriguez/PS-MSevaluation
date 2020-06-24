@@ -1,0 +1,1 @@
+FOR /L %%A IN (1,1,10) DO java -Xbootclasspath/p:.\lib\amcl-3.2-SNAPSHOT.jar -jar BenchmarkZK-jar-with-dependencies.jar %%A 

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns="http://zurich.ibm.com/idmixschema3.0"
+	xmlns:idmix="http://zurich.ibm.com/idmixschema3.0" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://zurich.ibm.com/idmixschema3.0"
+	attributeFormDefault="unqualified" elementFormDefault="qualified">
+
+
+	<xs:element name="SystemParametersTemplate">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Parameter" maxOccurs="unbounded" />
+				<xs:element name="hashFunction" type="xs:string" />
+			</xs:sequence>
+			<xs:attribute name="Version" type="xs:string" use="required" />
+			<xs:attribute name="SystemParametersId" type="xs:string"
+				use="required" />
+		</xs:complexType>
+	</xs:element>
+
+
+
+	<xs:element name="Parameter" type="Parameter" />
+	<xs:complexType name="Parameter">
+		<xs:sequence>
+			<xs:element ref="FriendlyDescription" minOccurs="0"
+				maxOccurs="unbounded" />
+		</xs:sequence>
+		<xs:attribute name="Name" type="xs:string" use="required" />
+	</xs:complexType>
+
+	<xs:element name="StringParameter" type="StringParameter" />
+	<xs:complexType name="StringParameter">
+		<xs:complexContent>
+			<xs:extension base="Parameter">
+				<xs:attribute name="Value" type="xs:string" use="required" />
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:element name="IntegerParameter" type="IntegerParameter" />
+	<xs:complexType name="IntegerParameter">
+		<xs:complexContent>
+			<xs:extension base="Parameter">
+				<xs:attribute name="Value" type="xs:int" use="required" />
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:element name="BigIntegerParameter" type="BigIntegerParameter" />
+	<xs:complexType name="BigIntegerParameter">
+		<xs:complexContent>
+			<xs:extension base="Parameter">
+				<xs:attribute name="Value" type="xs:integer" use="required" />
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+	<xs:element name="UriParameter" type="UriParameter" />
+	<xs:complexType name="UriParameter">
+		<xs:complexContent>
+			<xs:extension base="Parameter">
+				<xs:attribute name="Value" type="xs:anyURI" use="required" />
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+
+
+	<xs:element name="FriendlyDescription" type="FriendlyDescription" />
+	<xs:complexType name="FriendlyDescription">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="lang" type="xs:language" use="required" />
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	
+	
+	
+<!--
+	<xs:element name="SystemParameters">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Parameter" maxOccurs="unbounded" />
+				<xs:element name="hashFunction" type="xs:string" />
+			</xs:sequence>
+			<xs:attribute name="Version" type="xs:string" use="required" />
+			<xs:attribute name="SystemParametersURI" type="xs:anyURI"
+				use="required" />
+		</xs:complexType>
+	</xs:element>
+
+
+
+	<xs:element name="KeyPair">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="PrivateKey" minOccurs="1" maxOccurs="1" />
+				<xs:element ref="PublicKey" minOccurs="1" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="PrivateKey">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Parameter" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="PublicKeyURI" type="xs:anyURI" use="required" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="PublicKey">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Parameter" maxOccurs="unbounded" />
+				<xs:element ref="FriendlyDescription" minOccurs="0"
+					maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="PublicKeyURI" type="xs:anyURI" use="required" />
+			<xs:attribute name="SystemParametersURI" type="xs:anyURI"
+				use="required" />
+		</xs:complexType>
+	</xs:element>
+-->
+
+
+</xs:schema>
