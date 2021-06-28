@@ -21,8 +21,7 @@ library(reshape2)
 library(fitdistrplus)
 library(plotly)
 library("permute")
-#setwd("C:/Users/kepxu/Desktop/Universidad/Workspace/TFM/StatisticalStudy")
-setwd("D:/Jesus/Desktop/Universidad/Workspace/TFM/StatisticalStudy")
+setwd("D:/Jesus/Desktop/Universidad/Workspace/PS-MSevaluation/StatisticalStudy")
 dataDirectory <- "data"
 
 readRowFile <- function(filename){
@@ -154,8 +153,8 @@ show(g)
 ```
 
 ```{r keyGenPlotTrend, echo=FALSE, fig.cap="Times for key generation with linear trend for 50 repetitions of each experiment",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-lineartrendPlotAttr(keyGenData[[1]],paste("Key generation"),"Number of attributes","Time (ms)")
-# ggsave("KeyGenVaryAttr.pdf", device = cairo_pdf)
+g<-lineartrendPlotAttr(keyGenData[[1]],paste("Key generation"),"Number of attributes","Time (ms)")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("KeyGenVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g) 
 ```
 
@@ -183,14 +182,14 @@ for(i in seq(1,length(graphskeyAggrNS),1)){
 ```
 
 ```{r keyAggrMultiPlotNS, echo=FALSE, fig.cap="keyAggr times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotColumns(summarykeyAggrData,"Key Aggregation","Number of signers","Time (ms)","Attributes")
-#ggsave("KeyAggrVaryNS.pdf", device = cairo_pdf)
+g<-multilinePlotColumns(summarykeyAggrData,"Key Aggregation","Number of signers","Time (ms)","Attributes")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("KeyAggrVaryNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r keyAggrMultiPlotNattr, echo=FALSE, fig.cap="keyAggr times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotRows(summarykeyAggrData,"Key Aggregation","Number of attributes","Time (ms)","Signers","NS")
-#ggsave("KeyAggrVaryAttr.pdf", device = cairo_pdf)
+g<-multilinePlotRows(summarykeyAggrData,"Key Aggregation","Number of attributes","Time (ms)","Signers","NS")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("KeyAggrVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -249,8 +248,8 @@ for(i in seq(1,length(graphsSigningNS),1)){
 ```
 
 ```{r signingMultiPlotNS, echo=FALSE, fig.cap="Signing times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotColumns(summarySigningData,"Signing","Number of signers","Time (ms)","Attributes")
-# ggsave("SignVaryNS.pdf", device = cairo_pdf)
+g<-multilinePlotColumns(summarySigningData,"Signing","Number of signers","Time (ms)","Attributes")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("SignVaryNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -261,7 +260,7 @@ show(g)
 
 ```{r signingMultiPlotLinear, echo=FALSE, fig.cap="Signing times against number of attributes with linear trend",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-lineartrendPlotAttr(summarySigningData,"Signing with linear trend","Number of attributes","Time (ms)")
-# ggsave("SignVaryAttrTrend.pdf", device = cairo_pdf)
+# ggsave("SignVaryAttrTrend.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -291,14 +290,14 @@ for(i in seq(1,length(graphsCombineNS),1)){
 ```
 
 ```{r combineMultiPlotNS, echo=FALSE, fig.cap="Signature combination times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotColumns(summaryCombineData,"Signature combination","Number of signers","Time (ms)","Attributes")
-# ggsave("CombVaryNS.pdf", device = cairo_pdf)
+g<-multilinePlotColumns(summaryCombineData,"Signature combination","Number of signers","Time (ms)","Attributes")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("CombVaryNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r combineMultiPlotNattr, echo=FALSE, fig.cap="Signature combination  times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-multilinePlotRows(summaryCombineData,"Signature combination","Number of attributes","Time (ms)","Signers","NS")
-# ggsave("CombVaryAttr.pdf", device = cairo_pdf)
+# ggsave("CombVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -333,14 +332,14 @@ for(i in seq(1,length(graphsVerifyNS),1)){
 ```
 
 ```{r verifyMultiPlotNS, echo=FALSE, fig.cap="Signature verification times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotColumns(summaryVerifyData,"Signature verification","Number of signers","Time (ms)","Attributes")
-# ggsave("VerifyVaryNS.pdf", device = cairo_pdf)
+g<-multilinePlotColumns(summaryVerifyData,"Signature verification","Number of signers","Time (ms)","Attributes")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("VerifyVaryNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r verifyMultiPlotNattr, echo=FALSE, fig.cap="Signature verification times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotRows(summaryVerifyData,"Signature verification","Number of attributes","Time (ms)","Signers","NS")
-# ggsave("VerifyVaryAttr.pdf", device = cairo_pdf)
+g<-multilinePlotRows(summaryVerifyData,"Signature verification","Number of attributes","Time (ms)","Signers","NS")+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("VerifyVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -358,13 +357,13 @@ verifyDataPercentage<-summaryVerifyData/summaryIssuanceData
 
 ```{r issuanceMultiPlotNS, echo=FALSE, fig.cap="Issuance times against number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-multilinePlotColumns(summaryIssuanceData,"PS-MS Issuance","Number of signers","Time (ms)","Attributes")
-# ggsave("IssuanceTimesVaryNS.pdf", device = cairo_pdf)
+# ggsave("IssuanceTimesVaryNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r issuanceMultiPlotNattr, echo=FALSE, fig.cap="Issuance times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-multilinePlotRows(summaryIssuanceData,"PS-MS Issuance","Number of attributes","Time (ms)","Signers","NS")
-# ggsave("IssuanceTimesVaryAttr.pdf", device = cairo_pdf)
+# ggsave("IssuanceTimesVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -409,14 +408,14 @@ for(i in seq(1,length(graphsZkProofNAttr),1)){
 
 ```{r zkProofMultiPlotAttr, echo=FALSE, fig.cap="ZK proof generation times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-multilinePlotColumns(summaryZkProofData,"ZK proof generation","Number of attributes","Time (ms)","Revealed attributes")
-# ggsave("ZkProofVaryAttr.pdf", device = cairo_pdf)
+# ggsave("ZkProofVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 
 ```
 
 ```{r zkProofMultiPlotRattr, echo=FALSE, fig.cap="ZK proof generation times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotRows(summaryZkProofData,"ZK proof generation","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
-# ggsave("ZkProofVaryRevAttr.pdf", device = cairo_pdf)
+g<-multilinePlotRows(summaryZkProofData,"ZK proof generation","Number of revealed attributes","Time (ms)","Attributes","NA")
+# ggsave("ZkProofVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -479,7 +478,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("ZK proof generation for",nAttr,"attributes"),x="Number of revealed attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("ZkProofCompVaryRevAttr.pdf", device = cairo_pdf)
+# ggsave("ZkProofCompVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -506,7 +505,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk proof generation for",parseToNumber(nRevealedAttr) ,"revealed attributes"),x="Number of attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("ZkProofCompVaryAttr.pdf", device = cairo_pdf)
+# ggsave("ZkProofCompVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -533,7 +532,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk proof generation for 0 hidden attributes"),x="Number of attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("ZkProofComp0Hidden.pdf", device = cairo_pdf)
+# ggsave("ZkProofComp0Hidden.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -557,7 +556,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk proof generation for 1 hidden attribute"),x="Number of attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("ZkProofComp1Hidden.pdf", device = cairo_pdf)
+# ggsave("ZkProofComp1Hidden.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -588,13 +587,13 @@ for(i in seq(1,length(graphsZkVerifyNAttr),1)){
 
 ```{r zkVerifyMultiPlotAttr, echo=FALSE, fig.cap="ZK proof verification times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-multilinePlotColumns(summaryZkVerifyData,"ZK proof verification","Number of attributes","Time (ms)","Revealed attributes")
-# ggsave("ZkProofVerfVaryAttr.pdf", device = cairo_pdf)
+# ggsave("ZkProofVerfVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r zkVerifyMultiPlotRAttr, echo=FALSE, fig.cap="ZK proof verification times times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotRows(summaryZkVerifyData,"ZK proof verification","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
-# ggsave("ZkProofVerfVaryRevAttr.pdf", device = cairo_pdf)
+g<-multilinePlotRows(summaryZkVerifyData,"ZK proof verification","Number of revealed attributes","Time (ms)","Attributes","NA")
+# ggsave("ZkProofVerfVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -655,7 +654,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk verification with 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
   theme_ipsum_rc()
-ggsave("ZkProofVerfCompVaryRevAttr.pdf", device = cairo_pdf)
+ggsave("ZkProofVerfCompVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -682,7 +681,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk verification for 1 revealed attribute"),x="Number of attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("ZkProofVerfCompVaryAttr.pdf", device = cairo_pdf)
+# ggsave("ZkProofVerfCompVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -692,12 +691,12 @@ show(g)
 Fix number of signers (5) and different numbers of attributes:
 ```{r varyAttrData,echo=FALSE,include=FALSE}
 NS<-5
-numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+numberOfAttributes<-c("NA-02","NA-04","NA-06","NA-08")
 df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
 rownames(df)<-lapply(numberOfAttributes,parseToNumber)
-colnames(df)<-c("Signing","Combine","Verify")
+colnames(df)<-c("Sign","Combine","Verify")
 for(nAttr in numberOfAttributes){
-  df[parseToNumber(nAttr),"Signing"]= summarySigningData[NS,nAttr]
+  df[parseToNumber(nAttr),"Sign"]= summarySigningData[NS,nAttr]
   df[parseToNumber(nAttr),"Combine"]=summaryCombineData[NS,nAttr]
   df[parseToNumber(nAttr),"Verify"]=summaryVerifyData[NS,nAttr]
 }
@@ -718,8 +717,8 @@ show(g)
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="stack", stat="identity")+
   labs(fill="Step",title = paste("Issuance with",NS,"signers"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("IssuanceVaryAttr.pdf", device = cairo_pdf)
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("IssuanceVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -729,7 +728,7 @@ show(g)
 Fix number of attributes(5) and different numbers of signers :
 ```{r varyNSData,echo=FALSE,include=FALSE}
 numberOfSigners<-c("02","04","06","08")
-nAttr<-"NoAttr-05"
+nAttr<-"NA-05"
 df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=3))
 rownames(df)<-numberOfSigners
 colnames(df)<-c("Signing","Combine","Verify")
@@ -755,8 +754,8 @@ show(g)
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="stack", stat="identity")+
   labs(fill="Step",title = paste("Issuance with",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("IssuanceVaryNS.pdf", device = cairo_pdf)
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("IssuanceVaryNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -785,8 +784,8 @@ meltedDF<-melt(data=df,id.vars="group")
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk presentation with 1 revealed attribute"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("ZKpresentVaryAttr.pdf", device = cairo_pdf)
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("ZKpresentVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -823,8 +822,8 @@ meltedDF<-melt(data=df,id.vars="group")
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk presentation with 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("ZKpresentVaryRevAttr.pdf", device = cairo_pdf)
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("ZKpresentVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -885,7 +884,7 @@ summaryZkVerifyDataBLS381<-summInDF(meanZkVerifyDataBLS381)
 Issuance (Fixing number of signers to 5 then fixing number of attributes to 5)
 ```{r varyIssuanceBLS381,echo=FALSE,include=FALSE}
 NS<-"05"
-numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+numberOfAttributes<-c("NA-02","NA-04","NA-06","NA-08")
 df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
 rownames(df)<-numberOfAttributes
 colnames(df)<-c("BLS461","BLS381")
@@ -909,7 +908,7 @@ show(g)
 
 ```{r varyNSDataBLS381,echo=FALSE,include=FALSE}
 numberOfSigners<-c("02","04","06","08")
-nAttr<-"NoAttr-05"
+nAttr<-"NA-05"
 df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=2))
 rownames(df)<-numberOfSigners
 colnames(df)<-c("BLS461","BLS381")
@@ -925,7 +924,7 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyNSBarsBLS381, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BLS381 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Issuane time comparison BLS461-BLS381 for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
+  labs(fill="Step",title = paste("issuance time comparison BLS461-BLS381 for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
   theme_ipsum_rc()
 show(g)
 ```
@@ -1076,7 +1075,7 @@ summaryZkVerifyDataBN254<-summInDF(meanZkVerifyDataBN254)
 Issuance (Fixing number of signers to 5 then fixing number of attributes to 5)
 ```{r varyIssuanceBN254,echo=FALSE,include=FALSE}
 NS<-"05"
-numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+numberOfAttributes<-c("NA-02","NA-04","NA-06","NA-08")
 df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
 rownames(df)<-numberOfAttributes
 colnames(df)<-c("BLS461","BN254")
@@ -1100,7 +1099,7 @@ show(g)
 
 ```{r varyNSDataBN254,echo=FALSE,include=FALSE}
 numberOfSigners<-c("02","04","06","08")
-nAttr<-"NoAttr-05"
+nAttr<-"NA-05"
 df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=2))
 rownames(df)<-numberOfSigners
 colnames(df)<-c("BLS461","BN254")
@@ -1116,7 +1115,7 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyNSBarsBN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE, eval=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Issuane time comparison BLS461-BN254 for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
+  labs(fill="Step",title = paste("issuance time comparison BLS461-BN254 for",parseToNumber(nAttr),"attributes"),x="Number of signers", y="Time (ms)")+
   theme_ipsum_rc()
 show(g)
 ```
@@ -1224,7 +1223,7 @@ show(g)
 Issuance (Fixing number of signers to 5 then fixing number of attributes to 5)
 ```{r varyIssuanceBLS381BN254,echo=FALSE,include=FALSE}
 NS<-"05"
-numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
+numberOfAttributes<-c("NA-02","NA-04","NA-06","NA-08")
 df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
 rownames(df)<-lapply(numberOfAttributes,parseToNumber)
 colnames(df)<-c("BLS461","BLS381","BN254")
@@ -1242,15 +1241,15 @@ meltedDF<-melt(data=df,id.vars="group")
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Issuance comparison BLS461-BLS381-BN254 for 5 signers"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("CurveIssuanceVarAttr.pdf", device = cairo_pdf)
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+# ggsave("CurveIssuanceVarAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 
 ```{r varyNSDataBLS381BN254,echo=FALSE,include=FALSE}
 numberOfSigners<-c("02","04","06","08")
-nAttr<-"NoAttr-05"
+nAttr<-"NA-05"
 df<-data.frame(matrix(nrow =length(numberOfSigners) ,  ncol=3))
 rownames(df)<-numberOfSigners
 colnames(df)<-c("BLS461","BLS381","BN254")
@@ -1267,9 +1266,9 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyNSBarsBLS381BN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Issuane comparison BLS461-BLS381-BN254 for 5 attributes"),x="Number of signers", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("CurveIssuanceVarNS.pdf", device = cairo_pdf)
+  labs(fill="Step",title = paste("issuance BLS461-BLS381-BN254"),x="Number of signers", y="Time (ms)")+
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("CurveIssuanceVarNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1297,7 +1296,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk proof BLS461-BLS381-BN254 for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("CurveZkProofVarRevAttr.pdf", device = cairo_pdf)
+# ggsave("CurveZkProofVarRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1321,9 +1320,9 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyZkAttrBarsComparisonBLS381BN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Zk proof BLS461-BLS381-BN254 for 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("CurveZkProofVarAttr.pdf", device = cairo_pdf)
+  labs(fill="Step",title = paste("Zk proof BLS461-BLS381-BN254"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("CurveZkProofVarAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1350,7 +1349,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk verification BLS461-BLS381-BN254 for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("CurveZkVerfVarRevAttr.pdf", device = cairo_pdf)
+# ggsave("CurveZkVerfVarRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1374,9 +1373,9 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyZkVAttrBarsComparisonBLS381BN254, echo=FALSE, fig.cap="Time comparison between BLS461 and BN254 ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Zk verification BLS461-BLS381-BN254 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-ggsave("CurveZkVerfVarAttr.pdf", device = cairo_pdf)
+  labs(fill="Step",title = paste("Zk verification BLS461-BLS381-BN254"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("CurveZkVerfVarAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1394,7 +1393,7 @@ sdIdemixIssuance<-lapply(idemixIssuance,sdTimes)[[1]]
 
 ```{r issuanceIdemixPlot, echo=FALSE, fig.cap="Times for Idemix issuance",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-plotData(xValues=lapply(colnames(meanidemixIssuance),parseToNumber),yValues=meanidemixIssuance[1,],title = "Idemix Issuance ",labX="Number of attributes",labY="Time (ms)",scaleY=5)
-# ggsave("IdemixIssuancePlot.pdf", device = cairo_pdf)
+# ggsave("IdemixIssuancePlot.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1434,8 +1433,8 @@ show(g)
 ```
 
 ```{r zkProofIdemixMultiPlotRattr, echo=FALSE, fig.cap="ZK proof generation times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotRows(summaryzkProofDataIdemix,"Idemix Zk proof generation","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
-# ggsave("IdemixZkProof.pdf", device = cairo_pdf)
+g<-multilinePlotRows(summaryzkProofDataIdemix,"Idemix Zk proof generation","Number of revealed attributes","Time (ms)","Attributes","NA")
+# ggsave("IdemixZkProof.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1487,12 +1486,12 @@ for(i in seq(1,length(graphsZkVerifyNAttr),1)){
 
 ```{r zkVerifyIdemixMultiPlotAttr, echo=FALSE, fig.cap="ZK proof verification times against number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-multilinePlotColumns(summaryzkVerifyDataIdemix,"Idemix Zk proof verification","Number of attributes","Time (ms)","Revealed attributes")
-# ggsave("IdemixZkVerf.pdf", device = cairo_pdf)
+# ggsave("IdemixZkVerf.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r zkVerifyIdemixMultiPlotRAttr, echo=FALSE, fig.cap="ZK proof verification times times against number of revealed attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-multilinePlotRows(summaryzkVerifyDataIdemix,"Idemix ZK proof verification","Number of revealed attributes","Time (ms)","Attributes","NoAttr")
+g<-multilinePlotRows(summaryzkVerifyDataIdemix,"Idemix ZK proof verification","Number of revealed attributes","Time (ms)","Attributes","NA")
 show(g)
 ```
 
@@ -1524,15 +1523,16 @@ show(g)
 
 # Comparison of PS and Idemix
 ## Issuance
-Just 2 signers
+2 and 10 signers
 ```{r varyIssuanceDataComparison,echo=FALSE,include=FALSE}
 NS<-"02"
-numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
-df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
+numberOfAttributes<-c("NA-02","NA-04","NA-06","NA-08")
+df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=3))
 rownames(df)<-lapply(numberOfAttributes,parseToNumber)
-colnames(df)<-c("PS","Idemix")
+colnames(df)<-c("PS-02","PS-10","Idemix")
 for(nAttr in numberOfAttributes){
-  df[parseToNumber(nAttr),"PS"]= summaryIssuanceData[NS,nAttr]
+  df[parseToNumber(nAttr),"PS-02"]= summaryIssuanceData["02",nAttr]
+  df[parseToNumber(nAttr),"PS-10"]= summaryIssuanceData["10",nAttr]
   df[parseToNumber(nAttr),"Idemix"]=meanidemixIssuance[nAttr]
 }
 df$group<-rownames(df)
@@ -1543,52 +1543,18 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyIssuanceBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Issuance comparison using 2 signers"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("IdemixIssuance2NS.pdf", device = cairo_pdf)
+  labs(fill="Step",title = paste("Issuance comparison"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("IdemixIssuance02-10.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
 ```{r varyIssuanceStackedBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="stack", stat="identity")+
-  labs(fill="Step",title = paste("Time comparison for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
+  labs(fill="Step",title = paste("Issuance comparison"),x="Number of attributes", y="Time (ms)")+
   theme_ipsum_rc()
 show(g)
-```
-
-Using 10 signers for PS
-```{r varyIssuanceDataComparison10,echo=FALSE,include=FALSE}
-NS<-"10"
-numberOfAttributes<-c("NoAttr-02","NoAttr-04","NoAttr-06","NoAttr-08")
-df<-data.frame(matrix(nrow =length(numberOfAttributes) ,  ncol=2))
-rownames(df)<-lapply(numberOfAttributes,parseToNumber)
-colnames(df)<-c("PS","Idemix")
-for(nAttr in numberOfAttributes){
-  df[parseToNumber(nAttr),"PS"]= summaryIssuanceData[NS,nAttr]
-  df[parseToNumber(nAttr),"Idemix"]=meanidemixIssuance[nAttr]
-}
-df$group<-rownames(df)
-meltedDF<-melt(data=df,id.vars="group")
-```
-
-
-```{r varyIssuanceBarsComparison10, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
-g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
-  geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Issuance comparison using 10 signers"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("IdemixIssuance10NS.pdf", device = cairo_pdf)
-show(g)
-```
-
-```{r varyIssuanceStackedBarsComparison10, echo=FALSE, fig.cap="Time comparison between PS and Idemix Issuance for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE,include=FALSE,eval=FALSE}
-g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
-  geom_bar(position="stack", stat="identity")+
-  labs(fill="Step",title = paste("Time comparison for",NS,"signers"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-show(g)
-
 ```
 
 ## Zk proof generation
@@ -1613,7 +1579,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk proof comparison for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("IdemixZkProofCompVaryRevAttr.pdf", device = cairo_pdf)
+# ggsave("IdemixZkProofCompVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1646,9 +1612,9 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyZkAttrBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof generation for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Zk proof comparison for 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-# ggsave("IdemixZkProofCompVaryAttr.pdf", device = cairo_pdf)
+  labs(fill="Step",title = paste("Zk proof comparison (2 rev attr)"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("IdemixZkProofCompVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1686,7 +1652,7 @@ g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) +
   geom_bar(position="dodge", stat="identity")+
   labs(fill="Step",title = paste("Zk verification comparison for 9 attributes"),x="Number of revealed attributes", y="Time (ms)")+
   theme_ipsum_rc()
-# ggsave("IdemixZkVerfCompVaryRevAttr.pdf", device = cairo_pdf)
+# ggsave("IdemixZkVerfCompVaryRevAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1720,9 +1686,9 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyZkVAttrBarsComparison, echo=FALSE, fig.cap="Time comparison between PS and Idemix ZK proof verification for multiple number of attributes",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("Zk verification comparison for 2 revealed attributes"),x="Number of attributes", y="Time (ms)")+
-  theme_ipsum_rc()
-ggsave("IdemixZkVerfCompVaryAttr.pdf", device = cairo_pdf)
+  labs(fill="Step",title = paste("Zk verification comparison (2 rev attr)"),x="Number of attributes", y="Time (ms)")+
+  theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
+ggsave("IdemixZkVerfCompVaryAttr.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
 ```
 
@@ -1780,13 +1746,13 @@ normalDensity <- function(x){
 
 ## BLS461 vs Idemix
 
-```{r statSignificanceIssuaneBLS461Idemix, echo=FALSE}
+```{r statSignificanceissuanceBLS461Idemix, echo=FALSE}
 NS<-10
 NAttr<-2
 numberOfPermutations<-1000
-data1<-signingData[[9]]$`NoAttr-02`+combineData[[9]]$`NoAttr-02`+verifyData[[9]]$`NoAttr-02`
+data1<-signingData[[9]]$`NA-02`+combineData[[9]]$`NA-02`+verifyData[[9]]$`NA-02`
 name1<-"BLS461"
-data2<-idemixIssuance[[1]]$`NoAttr-02`
+data2<-idemixIssuance[[1]]$`NA-02`
 name2<-"Idemix"
 data<-c(data1,data2)
 names<-c(rep(name1,length(data1)),rep(name2,length(data2)))
@@ -1802,7 +1768,7 @@ for(i in seq_len(numberOfPermutations)){
 pValueMonte<-monteCarlo(permStat,realStat)
 ```
 
-```{r statSignificanceIssuane2BLS461Idemix, echo=FALSE}
+```{r statSignificanceissuance2BLS461Idemix, echo=FALSE}
 #shapiro.test(permStat)
 ajuste<-fitdist(permStat,"norm")
 mu<-ajuste$estimate[1]
@@ -1918,15 +1884,15 @@ cat('Statistical significance test for zk verification time comparison between',
 
 
 ## BLS461 vs BLS381 vs BN254
-```{r statSignificanceIssuaneBLS461BLS381BN254, echo=FALSE}
+```{r statSignificanceissuanceBLS461BLS381BN254, echo=FALSE}
 NS<-10
 NAttr<-5
 numberOfPermutations<-1000
-data1<-signingDataBN254[[9]]$`NoAttr-05`+combineDataBN254[[9]]$`NoAttr-05`+verifyDataBN254[[9]]$`NoAttr-05`
+data1<-signingDataBN254[[9]]$`NA-05`+combineDataBN254[[9]]$`NA-05`+verifyDataBN254[[9]]$`NA-05`
 name1<-"BN254"
-data2<-signingDataBLS381[[9]]$`NoAttr-05`+combineDataBLS381[[9]]$`NoAttr-05`+verifyDataBLS381[[9]]$`NoAttr-05`
+data2<-signingDataBLS381[[9]]$`NA-05`+combineDataBLS381[[9]]$`NA-05`+verifyDataBLS381[[9]]$`NA-05`
 name2<-"BLS381"
-data3<-signingData[[9]]$`NoAttr-05`+combineData[[9]]$`NoAttr-05`+verifyData[[9]]$`NoAttr-05`
+data3<-signingData[[9]]$`NA-05`+combineData[[9]]$`NA-05`+verifyData[[9]]$`NA-05`
 name3<-"BLS461"
 data<-c(data1,data2,data3)
 names<-c(rep(name1,length(data1)),rep(name2,length(data2)),rep(name3,length(data3)))
@@ -1942,7 +1908,7 @@ for(i in seq_len(numberOfPermutations)){
 pValueMonte<-monteCarlo(permStat,realStat)
 ```
 
-```{r statSignificanceIssuane2BLS461BLS381BN254, echo=FALSE}
+```{r statSignificanceissuance2BLS461BLS381BN254, echo=FALSE}
 #shapiro.test(permStat)
 ajuste<-fitdist(permStat,"norm")
 mu<-ajuste$estimate[1]
