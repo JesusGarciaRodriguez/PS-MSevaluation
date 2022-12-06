@@ -25,6 +25,7 @@
     </orderEntry>
     <orderEntry type="library" name="org.easymock:easymock:4.2" level="project" />
     <orderEntry type="library" name="abce.support_20150909v0.3.3" level="project" />
+    <orderEntry type="library" name="com.ibm.zurich.idmx.2-3-43" level="project" />
     <orderEntry type="library" name="Maven: junit:junit:4.12" level="project" />
     <orderEntry type="library" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="module-library">
@@ -45,6 +46,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="com.ibm.zurich.idmx.2-3-43" level="project" />
   </component>
 </module>

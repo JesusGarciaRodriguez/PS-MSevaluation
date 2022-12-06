@@ -1266,7 +1266,7 @@ meltedDF<-melt(data=df,id.vars="group")
 ```{r varyNSBarsBLS381BN254, echo=FALSE, fig.cap="Issuance time comparison between BLS461 and BN254 for multiple number of signers",fig.align='center', out.width='.5\\linewidth', warning=FALSE}
 g<-ggplot(meltedDF,aes(fill=variable, y=value, x=group)) + 
   geom_bar(position="dodge", stat="identity")+
-  labs(fill="Step",title = paste("issuance BLS461-BLS381-BN254"),x="Number of signers", y="Time (ms)")+
+  labs(fill="Step",title = paste("Issuance BLS461-BLS381-BN254"),x="Number of signers", y="Time (ms)")+
   theme_ipsum_rc()+theme(text = element_text(size=20),axis.title.x = element_text(size = 20),axis.title.y = element_text(size = 20),axis.text.x = element_text(size = 16),axis.text.y = element_text(size = 16), plot.title=element_text(size = 24), legend.text = element_text(size = 16))
 ggsave("CurveIssuanceVarNS.pdf", device = cairo_pdf, width = 7, height=7.06, units = "in")
 show(g)
