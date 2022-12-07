@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<abc:VerifierParameters xmlns:abc="http://abc4trust.eu/wp2/abcschemav1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:idmx="http://zurich.ibm.com" xmlns:xs="http://www.w3.org/2001/XMLSchema" Version="3.0.0" VerifierParametersId="idmx:global://zurich.ibm.com/parameters?type=verifier,name=*,version=1" SystemParametersId="idmx:global://zurich.ibm.com/parameters?type=system,name=*,version=1">
+    <abc:CryptoParams>
+        <abc:IdemixVerifierParameters VerifierParametersId="idmx:global://zurich.ibm.com/parameters?type=verifier,name=*,version=1" Version="3.0.0" SystemParametersId="idmx:global://zurich.ibm.com/parameters?type=system,name=*,version=1">
+            <abc:Parameter xsi:type="abc:UriParameter" Name="safeRsaGroupReference:ip:cl">
+                <abc:Value>idmx:global://zurich.ibm.com/parameters?type=issuer,name=*,version=1</abc:Value>
+            </abc:Parameter>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:spGen">urn:idmx:3.0.0:block:spGen:ecrypt2011</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:sig">urn:idmx:3.0.0:block:sig:cl</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:sig:uprove">urn:idmx:3.0.0:block:sig:uprove:sig:uprove</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:pseudonym:scopeExclusive">urn:idmx:3.0.0:block:pseudonym:scopeExclusive:scope_exclusive_pseudonym</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:pseudonym:standard">urn:idmx:3.0.0:block:pseudonym:standard:standard_pseudonym</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:h-rep-pedersen">urn:idmx:3.0.0:block:h-rep-pedersen:h-rep-pedersen</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:h-rep-df">urn:idmx:3.0.0:block:h-rep-df:h-rep-df</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:h-rep-paillier">urn:idmx:3.0.0:block:h-rep-paillier:h-rep-paillier</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:revocation">urn:idmx:3.0.0:block:revocation:cl</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:ins:cs">urn:idmx:3.0.0:block:ins:cs:ins:cs</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-constant">urn:idmx:3.0.0:block:s-constant:s-constant</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-source">urn:idmx:3.0.0:block:s-source:s-source</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-eq">urn:idmx:3.0.0:block:s-eq:s-eq</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-param-iss">urn:idmx:3.0.0:block:s-param-iss:s-param-iss</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-param-ins">urn:idmx:3.0.0:block:s-param-ins:s-param-ins</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-param-ra">urn:idmx:3.0.0:block:s-param-ra:s-param-ra</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-linear">urn:idmx:3.0.0:block:s-linear:s-linear</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-linear-modq">urn:idmx:3.0.0:block:s-linear-modq:s-linear-modq</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-ms">urn:idmx:3.0.0:block:s-ms:s-ms</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-m">urn:idmx:3.0.0:block:s-m:s-m</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-reveal">urn:idmx:3.0.0:block:s-reveal:s-reveal</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-param-sys">urn:idmx:3.0.0:block:s-param-sys:s-param-sys</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-param-v">urn:idmx:3.0.0:block:s-param-v:s-param-v</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:rangeProof">urn:idmx:3.0.0:block:rangeProof::rabinshallit</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-nEq">urn:idmx:3.0.0:block:s-nEq:s-nEq</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-setmem:cg">urn:idmx:3.0.0:block:s-setmem:cg:s-setmem:cg</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-abc4trust-m-c14n">urn:idmx:3.0.0:block:s-abc4trust-m-c14n:s-abc4trust-m-c14n</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-abc4trust-credspec">urn:idmx:3.0.0:block:s-abc4trust-credspec:s-abc4trust-credspec</abc:SupportedBuildingBlock>
+            <abc:SupportedBuildingBlock BlockId="urn:idmx:3.0.0:block:s-abc4trust-ptd">urn:idmx:3.0.0:block:s-abc4trust-ptd:s-abc4trust-ptd</abc:SupportedBuildingBlock>
+        </abc:IdemixVerifierParameters>
+    </abc:CryptoParams>
+</abc:VerifierParameters>

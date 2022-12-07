@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <abc:SystemParameters xmlns:abc="http://abc4trust.eu/wp2/abcschemav1.0" Version="3.0.0" SystemParametersUID="d0851d2a-1b9a-466c-a9b4-f816ad00cef1">
     <abc:CryptoParams>
+        <abc:UriParameter Name="urn:idmx:3.0.0:systemParameters:spId">
+            <abc:Value>idmx:global://zurich.ibm.com/parameters?type=system,name=*,version=1</abc:Value>
+        </abc:UriParameter>
         <abc:Parameter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="abc:UriParameter" Name="urn:idmx:3.0.0:systemParameters:spId">
             <abc:Value>d0851d2a-1b9a-466c-a9b4-f816ad00cef1</abc:Value>
         </abc:Parameter>
@@ -15,9 +18,6 @@
         </abc:Parameter>
         <abc:Parameter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="abc:StringParameter" Name="urn:idmx:3.0.0:systemParameters:hashFunction">
             <abc:Value>urn:abc4trust:1.0:hashalgorithm:sha-256</abc:Value>
-        </abc:Parameter>
-        <abc:Parameter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="abc:IntegerParameter" Name="urn:idmx:3.0.0:systemParameters:rsaModulusLength">
-            <abc:Value>2048</abc:Value>
         </abc:Parameter>
         <abc:Parameter xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="abc:IntegerParameter" Name="urn:idmx:3.0.0:systemParameters:attributeLength">
             <abc:Value>256</abc:Value>
